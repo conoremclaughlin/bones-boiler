@@ -12,6 +12,8 @@ var env = process.env.NODE_ENV || 'development';
 // Override this to add
 servers.Route.prototype.initializeStaticDir = function(link, path) {
     // Add static handler if page marked as complete.
+    // TODO: switch to mirror for serving static assets but we have no reverse
+    // proxy....
     this.get(link, express['static'](path, {
         maxAge : env === 'production' ? 3600 * 1000 : 0
     }));
