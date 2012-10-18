@@ -17,6 +17,6 @@
   "author": "Conor McLaughlin",
   "license": "BSD",
   "dependencies": {
-    "bones-document": "0.x"
+    "yaml-front-matter": "1.x.x"
   }
 }
