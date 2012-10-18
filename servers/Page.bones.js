@@ -29,10 +29,11 @@ server.prototype.pageHandler = function(page) {
     // Render the page once.
     console.log('pageHandler called to create a handle,', page);
     return function loadPage(req, res, next) {
+        res.locals.options || (res.locals.options = {});
         console.log('page called.');
         // TODO: set logged-in user or whatever.
-        req.locals.template = templates.Page;
-        req.locals.main = pages.page.content;
+        res.locals.template = templates.Page;
+        res.locals.options.main = Bones.plugin.pages[page].content;
         next();
     };
 };
@@ -54,7 +55,7 @@ server.prototype.initializeStaticPages = function(app, pages) {
     // Grab everything before and after the YAML front matter.
     var self = this;
     app.directories.forEach(function(dir) {
-        console.log('dir: ', dir);
+        console.log('initializing directory: ', dir);
         // only can use sync version here at initialization (blocking).
         // read the directories with a default base path of _site (else
         // check options)
@@ -65,19 +66,10 @@ server.prototype.initializeStaticPages = function(app, pages) {
             return fs.statSync(path.join(pagesPath, file)).isDirectory();
         });
 
-        console.log(files);
-
         _.each(files, function(file) {
             var front = yaml.loadFront(path.join(pagesPath, file), file);
-            // Must specify standard Jekyll permalink for now.
-            console.log('front: ', front);
-            console.log('file: ', file);
             if (front.url) {
-                console.log('we are adding this shit.');
                 self.get(front.url, self.pageHandler(path.basename(file, '.html')), self.send);
-                console.log('self.routes: ', self.routes.routes.get);
-                // if return a page before it hits the static serving of the
-                // root directory.
             }
         });
     });
