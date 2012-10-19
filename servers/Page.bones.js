@@ -27,17 +27,13 @@ server.prototype.pageHandler = function(page) {
     // TODO: add an app object to store the root level view.
     // TODO: app object also needs to store the Main router.
     // Render the page once.
-    console.log('pageHandler called to create a handle,', page);
     return function loadPage(req, res, next) {
-        res.locals.options || (res.locals.options = {});
-        console.log('page called.');
         // TODO: set logged-in user or whatever.
         res.locals.template = templates.Page;
-        res.locals.options.main = Bones.plugin.pages[page].content;
-        next();
+        res.locals.main = Bones.plugin.pages[page].content;
+        return next();
     };
 };
-
 
 // Override this to add
 server.prototype.initializeStaticDir = function(link, path) {
