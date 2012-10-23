@@ -17,6 +17,7 @@
   "author": "Conor McLaughlin",
   "license": "BSD",
   "dependencies": {
-    "yaml-front-matter": "1.x.x"
+    "yaml-front-matter": "1.x.x",
+    "backbone-forms": "0.10.x"
   }
 }
