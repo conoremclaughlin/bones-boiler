@@ -33,7 +33,7 @@ command.prototype.initialize = function(plugin, viewName, modelName, directory, 
     if (fs.existsSync(path)) { console.warn('Replacing file.'); }
     else { console.log('Creating new file.'); }
 
-    if (err = fs.writeFileSync(path.join(directory, modelName + '._'), view.render().html())) {
+    if (err = fs.writeFileSync(path.join(directory, modelName + '._'), view.render().outerHtml())) {
         console.error('Failed to write.', err);
     };
     return callback && callback(err);
