@@ -15,11 +15,11 @@ server = servers.App.extend();
 //handlers.
 //Augment to add static pages availability from the root path.
 server.prototype.initialize = function(app) {
-  _.bindAll(this, 'initializeStaticPages', 'initializeStaticDir', 'pageHandler');
-  this.initializeStaticPages(app, 'templates/source/pages');
-  this.initializeStaticDir('/', 'templates/compiled/public');
-  console.log('Page.app.routes: ', this.routes.routes.get);
-  return this;
+    _.bindAll(this, 'initializeStaticPages', 'initializeStaticDir', 'pageHandler');
+    this.initializeStaticPages(app, 'templates/source/pages');
+    this.initializeStaticDir('/', 'templates/compiled/public');
+    console.log('Page.app.routes: ', this.routes.routes);
+    return this;
 };
 
 // Return a handler to send the rendered page.
@@ -50,20 +50,23 @@ server.prototype.initializeStaticDir = function(link, path) {
 server.prototype.initializeStaticPages = function(app, pages) {
     // Grab everything before and after the YAML front matter.
     var self = this;
+    var pagesPath = '';
+    var files = [];
+    var front = '';
     app.directories.forEach(function(dir) {
         console.log('initializing directory: ', dir);
         // only can use sync version here at initialization (blocking).
         // read the directories with a default base path of _site (else
         // check options)
-        var pagesPath = path.join(dir, pages);
+        pagesPath = path.join(dir, pages);
         if (!fs.existsSync(pagesPath)) { return false; }
-        var files = fs.readdirSync(pagesPath);
+        files = fs.readdirSync(pagesPath);
         files = _.reject(files, function(file) {
             return fs.statSync(path.join(pagesPath, file)).isDirectory();
         });
 
         _.each(files, function(file) {
-            var front = yaml.loadFront(path.join(pagesPath, file), file);
+            front = yaml.loadFront(path.join(pagesPath, file), file);
             if (front.url) {
                 self.get(front.url, self.pageHandler(path.basename(file, '.html')), self.send);
             }

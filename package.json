@@ -14,10 +14,11 @@
     "bones",
     "express"
   ],
-  "author": "Conor McLaughlin",
+  "author": "conoremclaughlin",
   "license": "BSD",
   "dependencies": {
     "yaml-front-matter": "1.x.x",
-    "backbone-forms": "0.10.x"
+    "backbone-forms": "0.10.x",
+    "express-validator": "0.3.x"
   }
 }
