@@ -56,7 +56,7 @@ model.prototype.permissions = function(object) {
 
 
 Bones.sync = function(req, res, next) {
-
+    // CRUD read needs to happen here, with filtering taking place either before or after the read or write.
 
     switch(req.method) {
     case 'GET':

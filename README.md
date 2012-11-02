@@ -1,4 +1,4 @@
 bones-boiler
 ============
 
-Basic bones integration of Jekyll and playground for combination website/app features.
+Coming soon. Playground for cool test Bones features :))

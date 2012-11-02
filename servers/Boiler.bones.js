@@ -9,12 +9,12 @@ server.prototype.initialize = function(app) {
             models.Permissions.parsePermissions(model);
         }
     });
-    this.initializeModels();
+    this.initializeModelsAndCollections();
     this.use(new servers['Page']);
     return this;
 };
 
-server.prototype.initializeModels = function(app) {
+server.prototype.initializeModelsAndCollections = function(app) {
     if (app.config['disableDefaultApi']) { return ; }
     this.models = app.models;
     _.each(this.models, function(model) {
@@ -40,12 +40,9 @@ server.prototype.initializeBackboneApi = function(model, options) {
         del: [(model.validate || Bones.validate), (model.sync || Bones.sync)]
     };
     // doesn't matter if apiHandlers is null or empty with extend.
-    apiHandlers.extend(model.apiHandlers)
-               .extend(options.apiHandlers);
+    apiHandlers = apiHandlers.extend(model.apiHandlers)
+                             .extend(options.apiHandlers);
 
-    if (model.apiHandlers) {
-        apiHandlers.extend(model.apiHandlers);
-    }
     // bind each array of handlers to the proper method.
     _.each(_.keys(model.apiHandlers), function(method) {
         if (method !== 'post') {
