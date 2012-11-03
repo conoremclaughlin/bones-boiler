@@ -15,6 +15,15 @@ model.filter = function(object, schema, method) {
     return filtered;
 };
 
+// STATIC return a regular schema without the permissions associated.
+model.getSchema = function(schema) {
+    _.each(_.keys(schema), function(key) {
+        if (key.type && key.methods && _.indexOf(key.methods, method) === -1) { return false; }
+        filtered[key] = object[key];
+    });
+    return filtered;
+};
+
 // STATIC sets static permissions for properties within a model.
 // Looks for read, create, etc. under model.[...].key.methods
 // and adds them to the appropriate method hash to later be used for

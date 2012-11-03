@@ -1,3 +1,6 @@
+var Bones = require(global.__BonesPath__ || 'bones');
+var Backbone = Bones.Backbone;
+
 Backbone.sync = function(method, model, options) {
     // Default options, unless specified.
     options || (options = {});
@@ -26,51 +29,27 @@ Backbone.sync = function(method, model, options) {
     return Bones.sync(req, res, next);
 };
 
-
-
-app.post('/:urlparam', function(req, res) {
-
-    req.assert('postparam', 'Invalid postparam').notEmpty().isInt();
-    req.assert('getparam', 'Invalid getparam').isInt();
-    req.assert('urlparam', 'Invalid urlparam').isAlpha();
-
-    req.sanitize('postparam').toBoolean();
-
-    var errors = req.validationErrors();
-    if (errors) {
-      res.send('There have been validation errors: ' + util.inspect(errors), 500);
-      return;
-    }
-    res.json({
-      urlparam: req.param('urlparam'),
-      getparam: req.param('getparam'),
-      postparam: req.param('postparam')
-    });
-  });
-
-// Speed up permissions use.
-model.prototype.permissions = function(object) {
-    _
-
-};(['get', 'put', 'delete']);
-
-
 Bones.sync = function(req, res, next) {
-    // CRUD read needs to happen here, with filtering taking place either before or after the read or write.
-
+    /*
+     * CRUD backend execution needs to happen here.
+     *
     switch(req.method) {
     case 'GET':
+        db.read(req.model.id, next);
         break;
     case 'POST':
+        db.write(req.model, next);
+        break;
     case 'PUT':
         // filter out keys we don't want in our model.
-        _.pick(req.model, req.model.schema);
+        db.append(req.model.id, req.model, next);
         break;
     case 'DELETE':
+        db.deleteRecord(req.model.id, next);
         break;
     default:
         throw new Error('Unknown request method.');
     }
-
-    return next();
+    */
+    throw new Error('No default Bones.sync. You need to get your data from somewhere :)');
 };
