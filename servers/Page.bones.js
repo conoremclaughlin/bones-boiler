@@ -35,7 +35,8 @@ server.prototype.pageHandler = function(page) {
     };
 };
 
-// Override this to add
+// Override this to add a static directory
+// TODO: need? probably not lol
 server.prototype.initializeStaticDir = function(link, path) {
     // Add static handler if page marked as complete.
     // TODO: switch to mirror for serving static assets

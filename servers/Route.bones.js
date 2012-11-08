@@ -14,6 +14,7 @@ servers.Route.augment({
         // Add backbone-forms as a vendor serving.
         // @see Bones/servers/Route for url
         this.assets.vendor.unshift(require.resolve('backbone-forms/distribution/backbone-forms'));
+
         parent.call(this, app);
 
         this.use(new servers['Boiler'](app));
