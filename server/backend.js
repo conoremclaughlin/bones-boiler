@@ -1,10 +1,6 @@
-var Backbone = require('./backbone');
+var Backbone = require('backbone');
 var _ = require('underscore');
 
-/**
- * Example: var Backend = new Bones.plugin.backends.Backend();
- * var myBackend = Bones.plugin.backends.Backend.extend({ ... });
- */
 module.exports = Backend;
 
 function Backend(plugin, callback) {
@@ -15,12 +11,6 @@ function Backend(plugin, callback) {
 
 Backend.augment = Backbone.Router.augment;
 Backend.extend = Backbone.Router.extend;
-
-Backend.extend = _.wrap(Backend.extend, function(parent, props, staticProps) {
-    var result = parent.call(this, props, staticProps);
-    result.options = Object.create(this.options);
-    return result;
-});
 
 Backend.toString = function() {
     return '<Backend ' + this.title + '>';

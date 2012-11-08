@@ -41,7 +41,6 @@ Bones.sync = function(req, res, next) {
         db.write(req.model, next);
         break;
     case 'PUT':
-        // filter out keys we don't want in our model.
         db.append(req.model.id, req.model, next);
         break;
     case 'DELETE':

@@ -9,19 +9,18 @@ server.prototype.initialize = function(app) {
             models.Permissions.parsePermissions(model);
         }
     });
-    this.initializeModelsAndCollections();
-    this.use(new servers['Page']);
+    this.initializeModelsAndCollections(app);
     return this;
 };
 
 server.prototype.initializeModelsAndCollections = function(app) {
-    if (app.config['disableDefaultApi']) { return ; }
+    if (app.config['disableDefaultApi']) return ;
     this.models = app.models;
     _.each(this.models, function(model) {
         this.initializeBackboneApi(model);
     }.bind(this));
 
-    // fresh collection function map for readibility.
+    // fresh collection function map for readability.
     _.each(app.collections, function(collection) {
         this.initializeBackboneApi(collection);
     }.bind(this));
@@ -30,14 +29,14 @@ server.prototype.initializeModelsAndCollections = function(app) {
 server.prototype.initializeBackboneApi = function(model, options) {
     options = options || {};
 
-    var url = '';
+    var url = '',
         apiHandlers = {},
         model = new model(),
         build, // fn
         validate, // fn
         sanetize = (model.sanetize || Bones.sanetize),
         sync = (model.sync || Bones.sync),
-        format = (model.format || Bones.format),
+        format = (model.format || Bones.format);
 
     // IMPORTANT: build DOES NOT allocate a new Backbone model.
     // enhance as a factory-like method to keep it as fast as possible.
@@ -64,10 +63,14 @@ server.prototype.initializeBackboneApi = function(model, options) {
     }
 
     // expose functions as usable server handlers.
-    this.prototype.build = build;
-    this.prototype.validate = validate;
+    server.prototype.build = build;
+    server.prototype.validate = validate;
 
-    url = Bones.utils.getUrl(model);
+    try {
+        url = Bones.utils.getUrl(model);
+    } catch(error) {
+        return console.error('warning Boiler.initializeBackboneApi - no url for model - aborting models api point: ', error);
+    };
     apiHandlers = {
         get: [build, validate, sanetize, sync, format],
         post: [build, validate, sanetize, sync, format],
@@ -75,15 +78,17 @@ server.prototype.initializeBackboneApi = function(model, options) {
         del: [build, validate, sync]
     };
     // doesn't matter if apiHandlers is null or empty with extend.
-    apiHandlers = apiHandlers.extend(model.apiHandlers)
-                             .extend(options.apiHandlers);
+    apiHandlers = _.chain(apiHandlers)
+                   .extend(model.apiHandlers)
+                   .extend(options.apiHandlers)
+                   .value();
 
     // bind each array of handlers to the proper method.
-    _.each(_.keys(model.apiHandlers), function(method) {
+    _.each(_.keys(apiHandlers), function(method) {
         if (method !== 'post') {
             url += '/:id';
         }
-        this[method](url, model.apiHandlers[method]);
+        this[method](url, apiHandlers[method]);
     }.bind(this));
 };
 

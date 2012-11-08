@@ -54,7 +54,7 @@ server.prototype.initializeStaticPages = function(app, pages) {
     var files = [];
     var front = '';
     app.directories.forEach(function(dir) {
-        console.log('initializing directory: ', dir);
+        console.log('initializing static pages for directory: ', dir);
         // only can use sync version here at initialization (blocking).
         // read the directories with a default base path of _site (else
         // check options)

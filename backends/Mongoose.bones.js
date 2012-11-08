@@ -1,6 +1,7 @@
 backend = Bones.Backend.extend();
 
 backend.prototype.sync = backend.sync = function(req, res, next) {
+    if (!req.model) return next(new Error.HTTP('Error occured. No model for sync. Please try again later.', 500));
     var model = req.model;
 
     switch(req.method) {

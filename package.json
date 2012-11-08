@@ -20,5 +20,8 @@
     "yaml-front-matter": "1.x.x",
     "backbone-forms": "0.10.x",
     "express-validator": "0.3.x"
+  },
+  "devDependencies": {
+    "bones-test": "0.0.x"
   }
 }

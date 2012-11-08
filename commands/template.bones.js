@@ -30,8 +30,11 @@ command.prototype.initialize = function(plugin, viewName, modelName, directory, 
     var model = new plugin.models[modelName]();
     var view = new plugin.views[viewName]({ model: model });
 
-    if (fs.existsSync(path)) { console.warn('Replacing file.'); }
-    else { console.log('Creating new file.'); }
+    if (fs.existsSync(path)) {
+        console.warn('Replacing file.');
+    } else {
+        console.log('Creating new file.');
+    }
 
     if (err = fs.writeFileSync(path.join(directory, modelName + '._'), view.render().outerHtml())) {
         console.error('Failed to write.', err);
