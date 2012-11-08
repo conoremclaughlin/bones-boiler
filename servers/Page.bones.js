@@ -11,9 +11,9 @@ var env = process.env.NODE_ENV || 'development';
 
 server = servers.App.extend();
 
-//TODO: add a check to see if any conflicts between dynamic and static
-//handlers.
-//Augment to add static pages availability from the root path.
+// TODO: add a check to see if any conflicts between dynamic and static
+// handlers.
+// Augment to add static pages availability from the root path.
 server.prototype.initialize = function(app) {
     _.bindAll(this, 'initializeStaticPages', 'initializeStaticDir', 'pageHandler');
     this.initializeStaticPages(app, 'templates/source/pages');
@@ -38,9 +38,6 @@ server.prototype.pageHandler = function(page) {
 // Override this to add a static directory
 // TODO: need? probably not lol
 server.prototype.initializeStaticDir = function(link, path) {
-    // Add static handler if page marked as complete.
-    // TODO: switch to mirror for serving static assets
-    // but we have no reverse proxy....
     this.get(link, express['static'](path, {
         maxAge : env === 'production' ? 3600 * 1000 : 0
     }));
@@ -49,16 +46,15 @@ server.prototype.initializeStaticDir = function(link, path) {
 // TODO: create a command to initialize new paths while the server is running.
 // Override this for custom directory structures.
 server.prototype.initializeStaticPages = function(app, pages) {
-    // Grab everything before and after the YAML front matter.
     var self = this;
     var pagesPath = '';
     var files = [];
     var front = '';
+
     app.directories.forEach(function(dir) {
         console.log('initializing static pages for directory: ', dir);
-        // only can use sync version here at initialization (blocking).
-        // read the directories with a default base path of _site (else
-        // check options)
+
+        // read directory and filter out non-files.
         pagesPath = path.join(dir, pages);
         if (!fs.existsSync(pagesPath)) { return false; }
         files = fs.readdirSync(pagesPath);
@@ -66,6 +62,7 @@ server.prototype.initializeStaticPages = function(app, pages) {
             return fs.statSync(path.join(pagesPath, file)).isDirectory();
         });
 
+        // read yaml front matter of each file and expose a get if a front-matter has a url property.
         _.each(files, function(file) {
             front = yaml.loadFront(path.join(pagesPath, file), file);
             if (front.url) {
