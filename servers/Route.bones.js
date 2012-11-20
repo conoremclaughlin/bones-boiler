@@ -10,6 +10,7 @@ servers.Route.augment({
         routers: [],
         templates: []
     },
+
     initialize : function(parent, app) {
         // Add backbone-forms as a vendor serving.
         // @see Bones/servers/Route for url
@@ -20,9 +21,12 @@ servers.Route.augment({
         this.use(new servers['Boiler'](app));
         this.use(new servers['Page'](app));
     },
-    // TODO: change to a more flexible structure with perhaps augment, _.each,
-    // and non-hard-coded options and paths, i.e. assets.vendor = { paths: [], options: {} }
-    // or something along those lines. This is a quick fix for now.
+
+    /**
+     * TODO: change to a more flexible structure with perhaps augment, _.each,
+     * and non-hard-coded options and paths, i.e. assets.vendor = { paths: [], options: {} }
+     *  or something along those lines. This is a quick fix for now.
+     */
     initializeAssets: function(parent, app) {
         var options = {
             type: '.js',
@@ -52,12 +56,12 @@ servers.Route.augment({
 
         // Initialize and swap mirror for arrays of resolved paths
         _.extend(this.assets, {
-            vendor: new mirror(this.assets.vendor,{ type: '.js' }),
-            core: new mirror(this.assets.core, { type: '.js' }),
-            models: new mirror(this.assets.models, options),
-            views: new mirror(this.assets.views, options),
-            routers: new mirror(this.assets.routers, options),
-            templates: new mirror(this.assets.templates, options)
+            vendor:     new mirror(this.assets.vendor,{ type: '.js' }),
+            core:       new mirror(this.assets.core, { type: '.js' }),
+            models:     new mirror(this.assets.models, options),
+            views:      new mirror(this.assets.views, options),
+            routers:    new mirror(this.assets.routers, options),
+            templates:  new mirror(this.assets.templates, options)
         });
 
         // Offer an all.js mirror that serves everything.
@@ -66,6 +70,7 @@ servers.Route.augment({
         // Call parent to set get paths.
         parent.call(this, app);
     },
+
     initializeModels: function(parent, app) {
         // Do nothing. Boiler handles model and collection API initialization.
     }

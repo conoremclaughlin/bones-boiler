@@ -29,10 +29,14 @@ Backbone.sync = function(method, model, options) {
     return Bones.sync(req, res, next);
 };
 
-Bones.sync = function(req, res, next) {
-    /*
-     * CRUD backend execution needs to happen here.
-     *
+/**
+ * Override Bones.sync or model.sync with a backend solution
+ * otherwise default throws an error.
+ */
+Bones.sync = Bones.sync || function(req, res, next) {
+   /*
+    * CRUD backend execution needs to happen here.
+    *
     switch(req.method) {
     case 'GET':
         db.read(req.model.id, next);

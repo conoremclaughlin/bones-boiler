@@ -14,15 +14,12 @@ require('./server/server');
 
 // Load and expose Backend class in bones.
 // TODO: now see makara has done similar work for @bones-backend,
-// add as dependency and make pull requests including further functionality.
+//       add as dependency and make pull requests including further functionality.
 
 Bones.Backend = require('./server/backend');
 
 // Add backends to plugin and automatically load from directory.
 Bones.plugin.backends = {};
-
-//Add form as an inherited view.
-require('./server/form');
 
 // Wrap load to include the backends directory as well.
 // XXX: may have problems here with this pointer. *shakes fist at javascript*

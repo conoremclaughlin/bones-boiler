@@ -4,25 +4,31 @@ var _ = require('underscore');
 var express = require('express');
 var yaml = require('yaml-front-matter');
 var env = process.env.NODE_ENV || 'development';
+var debug = require('debug')('bones-boiler:page');
 
-// TODO: add the app object and some easy way to apply the default template
-// (some way to specify it as a root?)
-// If webapps will be embedded in a page like google maps, hmm......
-
+/**
+ * TODO: add the app object and some easy way to apply the default template
+ * (some way to specify it as a root?)
+ * If webapps will be embedded in a page like google maps, hmm......
+ */
 server = servers.App.extend();
 
-// TODO: add a check to see if any conflicts between dynamic and static
-// handlers.
-// Augment to add static pages availability from the root path.
+/**
+ * TODO: add a check to see if any conflicts between dynamic and static
+ * handlers.
+ * Augment to add static pages availability from the root path.
+ */
 server.prototype.initialize = function(app) {
     _.bindAll(this, 'initializeStaticPages', 'initializeStaticDir', 'pageHandler');
     this.initializeStaticPages(app, 'templates/source/pages');
     this.initializeStaticDir('/', 'templates/compiled/public');
-    console.log('Page.app.routes: ', this.routes.routes);
+    debug('exposed following static page routes: ', this.routes.routes);
     return this;
 };
 
-// Return a handler to send the rendered page.
+/**
+ * Return a handler to send the rendered page.
+ */
 server.prototype.pageHandler = function(page) {
     // TODO: add an app object to store the root level view.
     // TODO: app object also needs to store the Main router.
@@ -35,16 +41,20 @@ server.prototype.pageHandler = function(page) {
     };
 };
 
-// Override this to add a static directory
-// TODO: need? probably not lol
+/**
+ * Override this to add a static directory
+ * TODO: need? probably not lol
+ */
 server.prototype.initializeStaticDir = function(link, path) {
     this.get(link, express['static'](path, {
         maxAge : env === 'production' ? 3600 * 1000 : 0
     }));
 };
 
-// TODO: create a command to initialize new paths while the server is running.
-// Override this for custom directory structures.
+/**
+ * Override this for custom static-page directory structures.
+ * TODO: create a command to initialize new paths while the server is running.
+ */
 server.prototype.initializeStaticPages = function(app, pages) {
     var self = this;
     var pagesPath = '';
@@ -52,7 +62,7 @@ server.prototype.initializeStaticPages = function(app, pages) {
     var front = '';
 
     app.directories.forEach(function(dir) {
-        console.log('initializing static pages for directory: ', dir);
+        debug('exposing static pages for dir: ', dir);
 
         // read directory and filter out non-files.
         pagesPath = path.join(dir, pages);

@@ -23,7 +23,9 @@ command.options['path'] = {
     'default': './templates'
 };
 
-// Great for creating static templates like forms from model definitions.
+/**
+ * Great for creating static templates like forms from model schemas.
+ */
 command.prototype.initialize = function(plugin, viewName, modelName, directory, callback) {
     if (!view || !model) { console.log('Need both a model and a view name.'); }
     var err = {};

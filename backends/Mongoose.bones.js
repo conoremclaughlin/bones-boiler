@@ -1,37 +1,56 @@
+var mongoose = require('mongoose');
+var debug = require('debug')('bones-boiler:mongoose');
 backend = Bones.Backend.extend();
 
-backend.prototype.sync = backend.sync = function(req, res, next) {
-    if (!req.model) return next(new Error.HTTP('Error occured. No model for sync. Please try again later.', 500));
-    var model = req.model;
+backend.sync = function(req, res, next) {
+    if (!req.model) return next(new Error.HTTP('Error occured. No model to sync. Please try again later.', 500));
 
+    // TODO: populate model and switch from req.body to req.model.toJSON()
     switch(req.method) {
+    case 'get':
     case 'GET':
-        model.db.findById(req.model.id, function (err, model) {
-            if (err) return handleError(err);
-            req.model = model;
-            return next();
+        req.model.db.findById(req.model.id, function(err, document) {
+            //debug('get err, document:', err, document);
+            if (err) return next(new Error.HTTP(err, 500));
+            if (!document) return next(new Error.HTTP(err, 404));
+            res.locals.model = document.toObject();
+            return next(); // got!
         });
         break;
+    case 'post':
     case 'POST':
-        model.db.create(req.model.data, function (err, model) {
-            if (err) return handleError(err);
-            req.model = model;
-            return next();
+        // I'd rather use db.create to be consistent
+        // but it initializes a document model anyway.
+        var document = new req.model.db(req.body);
+        document.save(function(err, document) {
+            if (err) return next(new Error.HTTP(err, 500));
+            res.locals.model = document.toObject();
+            return next();// saved!
         });
+
         break;
+    case 'put':
     case 'PUT':
-        model.db.findByIdAndUpdate(req.model.id, req.model.data, function(err) {
-            if (err) return handleError(err);
-            return next(); // saved!
+        // XXX: Bug in mongoose so findByIdAndUpdate
+        // fails at this time if document is not initialized.
+        // TODO: Check again when we can bump versions.
+
+        // Cannot update the _id field for a mongo document.
+        if (req.body._id) delete req.body._id;
+        req.model.db.update({ _id: req.model.id }, req.body, function(err, document) {
+            if (err) return next(new Error.HTTP(err, 500));
+            return next(); // updated!
         });
         break;
+    case 'delete':
     case 'DELETE':
-        model.db.findByIdAndRemove(req.model.id, function(err) {
-            if (err) return handleError(err);
+        req.model.db.findByIdAndRemove(req.model.id, function(err) {
+            if (err) return next(new Error(err));
+            res.locals.model = { id: null };
             return next(); // deleted!
         });
         break;
     default:
-        res.send(new Error.HTTP('Unknown request method.', 500));
+        return res.send(new Error.HTTP('Unknown request method: ' + req.method, 500));
     }
 };
