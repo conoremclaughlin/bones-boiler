@@ -1,3 +1,4 @@
+var mongoose = require('mongoose');
 var debug = require('debug')('bones-boiler:boiler');
 
 /**
@@ -7,7 +8,11 @@ var debug = require('debug')('bones-boiler:boiler');
 server = servers.Base.extend({});
 
 server.prototype.initialize = function(app) {
-    _.bindAll(this, 'initializeBackboneApi');
+    _.bindAll(this, 'initializeBackends', 'initializeBackboneApi');
+
+    Bones.sync = app.backends.Mongoose.sync;
+    app.preflightTaskList = [];
+    app.preflightTaskList.push(this.initializeBackends);
 
     // parse and update the static method permissions for each model definition.
     _.each(models, function(model) {
@@ -20,6 +25,30 @@ server.prototype.initialize = function(app) {
     this.initializeModelsAndCollections(app);
 
     return this;
+};
+
+server.prototype.initializeBackends = function(next) {
+    var config = Bones.plugin.config;
+    var db;
+
+    db = mongoose.createConnection(config.mongoHost, config.mongoName, config.mongoPort);
+    db.on('error', console.error.bind(console, 'connection error:'));
+    db.once('open', function() {
+        // yay! register mongoose models for semi-mixins with server-side backbone models.
+        try {
+            Bones.plugin.mongooseModels = {};
+            _.each(models, function(model) {
+                if (model && model.prototype.dbSchema) {
+                    Bones.plugin.mongooseModels[model.title] = db.model(model.title, new mongoose.Schema(model.prototype.dbSchema));
+                }
+            });
+
+            return next();
+        } catch(err) {
+            return next(new Error('[warning App.initializeBackends] unable to create db.model: ' + err));
+        }
+    });
+    Bones.plugin.db = db;
 };
 
 server.prototype.initializeModelsAndCollections = function(app) {
@@ -74,7 +103,7 @@ server.prototype.initializeBackboneApi = function(backboneModel, options) {
 };
 
 /**
- * Generate validate route handler.
+ * .
  */
 server.prototype.makeValidateHandler = function(model) {
 
@@ -94,7 +123,6 @@ server.prototype.makeValidateHandler = function(model) {
 };
 
 /**
- * Generate build route handler.
  * Pass any querystring parameters to the model.
  */
 server.prototype.makeBuildHandler = function(model) {
@@ -116,7 +144,7 @@ server.prototype.sanetize = function(req, res, next) {
 };
 
 /**
- * Filter out passwords, etc. from model returned.
+ * Filter out passwords, etc. from model returned from the database.
  * TODO: Change so filters for all.  POST can get in, but not out in the returned model.  Need to figure out boolean rules for that.
  */
 server.prototype.makeParseHandler = function(model) {

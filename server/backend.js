@@ -26,6 +26,7 @@ Backend.prototype.initialize = function(plugin, callback) {};
 Backend.prototype.toString = function() {
     return '[Backend ' + this.constructor.title + ']';
 };
+
 /**
  * What else does a backend commonly need? A method to create a query (whitelisting, blacklisting, JSON parsing?, defaults)
  * TODO: Change the naming, but keeping it for now for legacy reasons.

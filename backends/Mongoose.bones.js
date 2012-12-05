@@ -5,12 +5,10 @@ backend = Bones.Backend.extend();
 backend.sync = function(req, res, next) {
     if (!req.model) return next(new Error.HTTP('Error occured. No model to sync. Please try again later.', 500));
 
-    // TODO: populate model and switch from req.body to req.model.toJSON()
     switch(req.method) {
     case 'get':
     case 'GET':
         req.model.db.findById(req.model.id, function(err, document) {
-            //debug('get err, document:', err, document);
             if (err) return next(new Error.HTTP(err, 500));
             if (!document) return next(new Error.HTTP(err, 404));
             res.locals.model = document.toObject();
@@ -20,12 +18,12 @@ backend.sync = function(req, res, next) {
     case 'post':
     case 'POST':
         // I'd rather use db.create to be consistent
-        // but it initializes a document model anyway.
+        // but it initializes a document anyway.
         var document = new req.model.db(req.body);
         document.save(function(err, document) {
             if (err) return next(new Error.HTTP(err, 500));
             res.locals.model = document.toObject();
-            return next();// saved!
+            return next(); // saved!
         });
 
         break;
@@ -34,8 +32,6 @@ backend.sync = function(req, res, next) {
         // XXX: Bug in mongoose so findByIdAndUpdate
         // fails at this time if document is not initialized.
         // TODO: Check again when we can bump versions.
-
-        // Cannot update the _id field for a mongo document.
         if (req.body._id) delete req.body._id;
         req.model.db.update({ _id: req.model.id }, req.body, function(err, document) {
             if (err) return next(new Error.HTTP(err, 500));

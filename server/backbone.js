@@ -2,7 +2,6 @@ var Bones = require(global.__BonesPath__ || 'bones');
 var Backbone = Bones.Backbone;
 
 Backbone.sync = function(method, model, options) {
-    // Default options, unless specified.
     options || (options = {});
 
     var req = {

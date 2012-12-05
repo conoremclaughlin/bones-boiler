@@ -27,9 +27,6 @@ utils.methodMap = {
     'read':   'GET'
 };
 
-/**
- * Globally expose url helper from inside bones model sync.
- */
 utils.getUrl = function(object) {
     if (!(object && object.url)) throw new Error("A 'url' property or function must be specified");
     return _.isFunction(object.url) ? object.url() : object.url;

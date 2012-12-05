@@ -11,7 +11,7 @@ var debug = require('debug')('bones-boiler:page');
  * (some way to specify it as a root?)
  * If webapps will be embedded in a page like google maps, hmm......
  */
-server = servers.App.extend();
+server = servers.Base.extend();
 
 /**
  * TODO: add a check to see if any conflicts between dynamic and static
