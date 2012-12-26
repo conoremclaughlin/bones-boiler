@@ -10,7 +10,7 @@ server.prototype.send = function(req, res) {
     var template = res.locals.template || templates.App;
     var initialize = res.locals.initialize || function(models, views, routers, templates) {};
 
-    // TODO: this is unreadable lol. change it.
+    // TODO: this is unreadable. change it.
     options.main = res.locals.main || (res.locals.view ? (res.locals.view.outerHtml ?
                    res.locals.view.render().outerHtml() :
                    res.locals.view.render().html()) :
@@ -19,7 +19,7 @@ server.prototype.send = function(req, res) {
     // options.main takes precedence over view in case no need to render, only attach on the client.
     options = _.defaults(options, {
         version: Date.now(),
-        title: 'Centered Culture',
+        title: 'electriculture',
         startup: '(function() { Bones.initialize(' + initialize.toString() + '); Bones.start(); })();'
     });
 

@@ -1,3 +1,4 @@
+// TODO: move this to another folder like shared.
 Backbone.View.prototype.outerHtml = function() {
     var elem = this.$el;
     var div, temp;

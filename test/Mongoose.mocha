@@ -5,13 +5,18 @@
 
 // ***************************** TESTS ******************************
 
+process.env.NODE_ENV = 'test';
+
 require('./fixture');
 
 var _ = require('underscore');
 var bonesTest = require('bones-test');
 
-var server = bonesTest.server();
 // TODO: change how to require server.
+var server = bonesTest.server();
+// Write to a test database.
+// TODO: write an uninstall method for the test database.
+server.plugin.config.mongoName += '-test';
 
 // Test data.
 var data = {

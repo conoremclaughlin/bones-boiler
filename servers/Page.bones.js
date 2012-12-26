@@ -1,10 +1,10 @@
-var fs = require('fs');
-var path = require('path');
-var _ = require('underscore');
+var fs      = require('fs');
+var path    = require('path');
+var _       = require('underscore');
 var express = require('express');
-var yaml = require('yaml-front-matter');
-var env = process.env.NODE_ENV || 'development';
-var debug = require('debug')('bones-boiler:page');
+var yaml    = require('yaml-front-matter');
+var env     = process.env.NODE_ENV || 'development';
+var debug   = require('debug')('bones-boiler:page');
 
 /**
  * TODO: add the app object and some easy way to apply the default template

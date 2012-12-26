@@ -4,7 +4,7 @@
   "description": "Test playground for cool bones setups and features.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha -R ./test"
+    "test": "mocha ./test"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,7 @@
   "author": "conoremclaughlin",
   "license": "BSD",
   "dependencies": {
+    "js-base64": "git://github.com/dankogai/js-base64.git",
     "yaml-front-matter": "1.x.x",
     "backbone-forms": "0.10.x",
     "express-validator": "0.3.x"

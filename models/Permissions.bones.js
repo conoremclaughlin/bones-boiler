@@ -40,7 +40,7 @@ model.getSchema = function(schema) {
  * for every model request or update.
  */
 model.parseSchemaPermissions = function(currentPath, schema, permissions) {
-    if (schema === null) return false;
+    if (schema === null || !_.isObject(schema)) return false;
     _.each(_.keys(schema), function(key) {
         if (key.type) {
 

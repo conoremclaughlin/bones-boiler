@@ -1,5 +1,7 @@
+var fs    = require('fs');
 var Bones = require(global.__BonesPath__ || 'bones');
 var utils = Bones.utils;
+
 
 /**
  * Extend will overwrite only when plugin.js is loaded outside a specific function scope. Hard-coding path from this index.js file for now
@@ -27,40 +29,31 @@ utils.methodMap = {
     'read':   'GET'
 };
 
-utils.getUrl = function(object) {
-    if (!(object && object.url)) throw new Error("A 'url' property or function must be specified");
-    return _.isFunction(object.url) ? object.url() : object.url;
+utils.registerWrapperForFile = function(filename, wrapper) {
+    filename = require.resolve(filename);
+    utils.wrappersServer[filename] = utils.wrappersServer[wrapper];
+};
+
+utils.compileWrapper = function(module, filename) {
+    var wrapper = utils.wrappersServer[filename];
+    var content = fs.readFileSync(filename, 'utf8');
+    if (!content) throw new Error('unable to read file: ', filename);
+
+    if (wrapper) {
+        if (wrapper.prefix) content = wrapper.prefix + ';' + content;
+        if (wrapper.suffix) content += '\n;' + wrapper.suffix;
+        module._compile(content, filename);
+    }
 };
 
 /**
- * @see: http://stackoverflow.com/questions/2631001/javascript-test-for-existence-of-nested-object-key
+ * XXX: this doesn't return the code, properly
  */
-utils.checkNested = function(obj /*, level1, level2, ... levelN*/) {
-    var args = Array.prototype.slice.call(arguments),
-        obj = args.shift();
-
-    for (var i = 0; i < args.length; i++) {
-        if (!obj.hasOwnProperty(args[i]))
-            return false;
-        obj = obj[args[i]];
-    }
-    return true;
+utils.requireWithWrap = function(module, filename, kind) {
+    filename = require.resolve(filename);
+    var content = fs.readFileSync(filename, 'utf8');
+    content = utils.wrappersServer[kind].prefix + ';' + content + '\n;' + utils.wrappersServer[kind].suffix;
+    module._compile(content, filename);
+    return module.require(filename);
 };
 
-/**
- * Credit to: backbone-forms for this method.
- * Gets a nested attribute using a path e.g. 'user.name'
- *
- * @param {Object} obj    Object to fetch attribute from
- * @param {String} path   Attribute path e.g. 'user.name'
- * @return {Mixed}
- * @api private
- */
-utils.getNested = function(obj, path) {
-    var fields = path.split(".");
-    var result = obj;
-    for (var i = 0, n = fields.length; i < n; i++) {
-        result = result[fields[i]];
-    }
-    return result;
-};
