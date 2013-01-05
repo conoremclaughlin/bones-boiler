@@ -2,7 +2,7 @@ var utils = require('bones').utils;
 var fs = require('fs');
 
 utils.wrappersServer = _.extend(utils.wrappersServer, utils.loadWrappers(__dirname));
-utils.wrappersServer = _.extend(utils.wrappersServer, utils.loadWrappers(__dirname + '/node_modules'));
+utils.wrappersServer = _.extend(utils.wrappersServer, utils.loadWrappers(__dirname + '/wrappers'));
 
 require.extensions['.js'] = _.wrap(require.extensions['.js'], function(parent, module, filename) {
     utils.compileWrapper(module, filename);

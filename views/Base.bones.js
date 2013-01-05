@@ -1,10 +1,10 @@
 view = Backbone.View.extend({
-    // TODO: THIS IS IN THE WRONG PLACE *facepalm*
     renderAll: function() {
         if (!this.render) return false;
-        return this.render().renderSubviews();
+        return Bones.utils.renderAll(this);
     },
 
+    // TODO: capitalize Html to HTML
     outerHtml: function() {
         var elem = this.$el;
         var div, temp;

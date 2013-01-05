@@ -1,7 +1,13 @@
 var Bones = require(global.__BonesPath__ || 'bones');
 
 require('./server/utils');
-require('./shared/utils');
+
+// TODO: include in Bones.plugin.load wrapper, but
+// small chance can break things if other plugin writers
+// not disciplined enough.
+Bones.utils.loadServerPlugin(__dirname);
+
+/*require('./shared/utils');
 require('./server/plugin');
 
 // Override bones.sync and backbone.sync methods with mongoose handlers.
@@ -9,6 +15,7 @@ require('./server/backbone');
 
 // Add pre-flight task queue to the start of a server.
 require('./server/server');
+*/
 
 // Form extends View so add forms to the views folder
 Bones.Backbone.Form = require('backbone-forms/distribution/backbone-forms');

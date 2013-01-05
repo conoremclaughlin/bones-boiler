@@ -1,10 +1,26 @@
-var debug = require('debug')('bones-boiler:utils');
-var Bones = require(global.__BonesPath__ || 'bones');
-var utils = Bones.utils;
-var templates = Bones.plugin.templates;
-var models = Bones.plugin.models;
-var $ = Bones.$;
-var util = require('util');
+// TODO: hate this require structure. Please change. Should this be utils?
+var debug = '';
+if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    var Bones = require(global.__BonesPath__ || 'bones');
+    module.exports = Bones.utils;
+    debug = require('debug')('bones-boiler:utils');
+} else {
+    debug = console.log;
+}
+
+console.log('Bones: ', Bones);
+
+var Bones = Bones || {};
+var utils = Bones.utils = Bones.utils || {};
+console.log('utils: ', utils);
+var $ = Bones.$ || $;
+var templates = templates || Bones.plugin.templates;
+console.log('templates: ', templates);
+var models = models || Bones.plugin.models;
+
+if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    module.exports = Bones.utils;
+}
 
 /**
  * Parses information about the subview from the data-id of the div.view
@@ -16,31 +32,60 @@ var util = require('util');
  * @param [selector] selects and parses an element from the DOM.
  * @returns element with newly rendered subviews.
  */
-utils.renderSubviews = function renderSubviews(element, selector) {
+utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
     var view    = '',
         model   = '';
 
-    element = selector ? $(selector) : element;
-    element.$('div[data-view]').each(function() {
-        // TODO: change to $(this).attr so as not to allocate memory unnecessarily
-        if ($(this).attr('data-model')) model = new models[$(this).attr('data-model')]();
-        if ($(this).attr('data-view')) {
-            view = new views[$(this).attr('data-view')]({ model: model });
-        } else {
-            return false;
+    element = _.isString(element) ? $(element) : element;
+    element.$('div[data-view^=""]').each(function() {
+        options = (store && $(this).attr('data-id') && store[$(this).attr('data-id')])
+                ? store[$(this).attr('data-id')]
+                : {};
+
+        // If there's a data-model, we must be attaching, check the data-id and assign.
+        // Overwrites model if it's in options.model
+        if ($(this).attr('data-model')) {
+            model = options.model ? options.model : {};
+            if ($(this).attr('data-id')) {
+                model.id = $(this).attr('data-id');
+            }
+            model = new models[$(this).attr('data-model')](model);
+            options.model = model;
+
+            // TODO: clarify collision behavior for data-ids sent from the server
+            // versus the temporary object counter
+            if ($(this).attr('data-id')) {
+                model.id = $(this).attr('data-id');
+            }
         }
 
-        // render if needed, else move the html up and attach a view for
-        if ($(this).attr('data-render')) {
-            view.renderAll ? view.renderAll() : view.render();
+        view = new views[$(this).attr('data-view')](options);
+
+        // render if no content, else move the html to the view
+        if (!$(this).children[0]) {
+            view.renderAll ? view.renderAll(store) : utils.renderAll(view, store);
+        } else {
+            // TODO: what to do here if we use outerHtml? use the selector?
+            view.html($(this).html());
+        }
+
+        if (shouldReplace) {
             $(this).replaceWith(view.el);
         } else {
-            $(this).replaceWith($(this).html());
+            $(this).html(view.html());
         }
         // TODO: store the allocated view or use a Factory for both view and model?
     });
+    // TODO: how do we return the views? store them?
     return element;
 };
+
+utils.renderAll = function(view, store) {
+    if (!view.render) return false;
+    store = store || utils.makeStore();
+    view.render();
+    return utils.renderSubviews(view.el, store);
+},
 
 /**
  * Use templates to directly render subviews. Data-id hashes must have view names
@@ -53,7 +98,7 @@ utils.renderSubviews = function renderSubviews(element, selector) {
  * @returns a rendered string of html.
  */
 utils.templateSubviews = function templateSubviews(html, store, selector, shouldReplace) {
-    var data    = {},
+    var options = {},
         element = selector ? $(selector) : $('<div/>').html(html);
 
     debug('debug html: ', element.html());
@@ -61,23 +106,28 @@ utils.templateSubviews = function templateSubviews(html, store, selector, should
     var elements = $('div[data-view^=""]', element);
     debug('elements: ', elements);
     $('div[data-view^=""]', element).each(function() {
-        if ($(this).attr('data-model') && models[$(this).attr('data-model')]) {
-            var model = new models[$(this).attr('data-model')]();
-        }
+
+//        if ($(this).attr('data-model') && models[$(this).attr('data-model')]) {
+//            var model = new models[$(this).attr('data-model')]();
+//        }
 //        debug('this: ', this);
 //        debug('this html: ', $(this).html());
 
-        data = (store && $(this).attr('data-id')) ? store[$(this).attr('data-id')] : {};
+        options = (store && $(this).attr('data-id')) ? store[$(this).attr('data-id')] : {};
 //        debug('subviews : data-view name: ', $(this).attr('data-view'));
-        html = utils.templateAll($(this).attr('data-view'), data, store);
+        html = utils.templateAll($(this).attr('data-view'), options, store);
 //        debug('subviews : data-view html: ', html);
         if (shouldReplace) {
             debug('replacing');
             $(this).replaceWith(html);
         } else {
             $(this).html(html);
-            if (model && model.id) {
-                $(this).attr('data-id', model.id);
+            debug('[templateSubviews] not replacing.');
+            if (options && options.model && (options.model.id || options.model._id)) {
+                var id = options.model.id || options.model._id;
+                $(this).attr('data-id', id);
+            } else {
+                $(this).removeAttr('data-id');
             }
         }
     });
@@ -122,6 +172,7 @@ utils.partial = function(view, options, store) {
 //    // i'm sure they have their reasons
 //    options = options.toObject ? options.toObject() : options;
     debug('options: ', options);
+    // XXX: should replace doesn't add data-model if it exists?
     if (options.model) {
         // guess at what the model name may be:
         // string, Backbone instance/class, Mongoose model/collection name)

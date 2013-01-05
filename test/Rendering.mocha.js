@@ -3,8 +3,8 @@ var bonesTest = require('bones-test');
 var server = bonesTest.server();
 
 var tests = [
-    { name: 'uno' },
-    { name: 'dos' }
+    { id: 5, name: 'uno' },
+    { _id: 6, name: 'dos' }
 ];
 
 describe('Templating and rendering', function() {
@@ -12,7 +12,6 @@ describe('Templating and rendering', function() {
 
     describe('partial templating', function() {
         it('should create a placeholder element', function(done) {
-//            server.utils.partial('').should.equal('div');
             var html = server.utils.partial('test');
             html.should.equal('<div data-view="test"></div>');
             done();
@@ -46,7 +45,7 @@ describe('Templating and rendering', function() {
         it('should add a store to the namespace of makePartialHelper', function(done) {
             var store = server.utils.makeStore();
             var func = server.utils.makePartialHelper(store);
-            var html = func('test', {
+            func('test', {
                 model: 'hello'
             });
             store[0].be.a('object');
@@ -57,45 +56,65 @@ describe('Templating and rendering', function() {
     });
 
     describe('templateSubviews', function() {
+        var html = '';
+
         it('should replace all partial placeholders with rendered html', function() {
-            var html = templates.test({
+            html = templates.test({
                 data: tests,
                 partial: server.utils.makePartialHelper(server.utils.makeStore())
             });
             var element = $(html);
-            $(element, 'div[data-view]').length().should.equal(2);
+            $(element, 'div[data-view^=""]').length().should.equal(2);
             html = templateSubviews(html);
             element = $(html);
-            $(element, 'div[data-view]').length().should.equal(2);
-            $(element, 'div[data-view]').forEach(function() {
+            $(element, 'div[data-view^=""]').length().should.equal(2);
+            $(element, 'div[data-view^=""]').forEach(function() {
                 $(this).html().should.not.equal('');
             });
             done();
         });
 
         it('should replace the data-id for the temporary object with a model.id', function() {
-            done('implement');
+            var i = 5;
+            $(element, 'div[data-view^=""]').forEach(function() {
+                $(this).attr('data-id').should.equal(i);
+                i++;
+            });
+            done();
         });
     });
 
     describe('templateAll', function() {
-        it('should use partial to render placeholders', function() {
-            done('implement');
-        });
+        var html = '';
 
         it('should recursively template the view and its subviews', function() {
-           done('implement');
+            html = server.utils.templateAll('test', { data: tests });
+            var element = $(html);
+            $(element, 'div[data-view^=""]').length().should.equal(2);
+            $(element, 'div[data-view^=""]').forEach(function() {
+                $(this).html().should.not.equal('');
+            });
+            done();
        });
-
-
     });
 
     describe('renderSubviews', function() {
-        it('should replace placeholders with rendered views', function() {
-            done('implement me');
-        });
+        var html = '',
+            views = [],
+            rendered = '';
 
         it('should attach views to pre-rendered placeholders', function() {
+            html = server.utils.templateAll('test', { data: tests });
+            views = server.utils.renderSubviews(html);
+            views[0].model.id.should.equal(5);
+            rendered = views[0].html();
+            views[0].model = new server.models['Base']({ _id: 7, name: good-bye });
+            views = server.utils.renderSubviews(views[0].html());
+            views[0].html().should.not.equal(rendered);
+            done();
+        });
+
+        it('should replace placeholders with rendered views if shouldReplace is true', function() {
             done('implement me');
         });
 
