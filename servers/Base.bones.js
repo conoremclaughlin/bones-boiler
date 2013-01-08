@@ -11,10 +11,12 @@ server.prototype.send = function(req, res) {
     var initialize = res.locals.initialize || function(models, views, routers, templates) {};
 
     // TODO: this is unreadable. change it.
-    options.main = res.locals.main || (res.locals.view ? (res.locals.view.outerHtml ?
-                   res.locals.view.render().outerHtml() :
-                   res.locals.view.render().html()) :
-                   'Loading');
+    options.main = res.locals.main
+                    || (res.locals.view
+                    ? (res.locals.view.outerHtml
+                    ? res.locals.view.render().outerHtml()
+                    : res.locals.view.render().html())
+                    : 'Loading');
 
     // options.main takes precedence over view in case no need to render, only attach on the client.
     options = _.defaults(options, {

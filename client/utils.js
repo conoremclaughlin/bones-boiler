@@ -5,7 +5,6 @@
             kind = _.wrap(kind, function(parent) {
                 var args = Array.prototype.slice.call(arguments, 1);
                 args.push(Bones);
-                console.log('args: ', args);
                 parent.apply(this, args);
             });
         }

@@ -19,10 +19,10 @@ servers.Route.augment({
     initialize : function(parent, app) {
         // Add backbone-forms as a vendor serving.
         // @see Bones/servers/Route for mirror urls
-        _.bindAll(this, 'loadClientPlugin', 'loadClientVendor', 'loadClientPlugins');
-        this.loadClientVendor('backbone-forms/distribution/backbone-forms');
-        this.loadClientCore('../client/utils');
-        this.loadClientPlugins(app);
+        _.bindAll(this, 'exposeClientPlugin', 'exposeClientVendor', 'exposeClientCore', 'loadClientPlugin', 'loadClientPlugins');
+        this.exposeClientVendor('backbone-forms/distribution/backbone-forms');
+        this.exposeClientCore('../client/utils');
+        this.loadClientPlugin(path.join(__dirname, '..'));
         console.log('bones-boiler route assets: ', this.assets);
         parent.call(this, app);
         this.use(new servers['Boiler'](app));
@@ -96,30 +96,48 @@ servers.Route.augment({
         console.log('this.assets.all: ', this.assets.all);
     },
 
-    loadClientCore: function(parent, filename) {
+    exposeClientCore: function(parent, filename) {
         this.assets.core.push(require.resolve(filename));
     },
 
-    loadClientPlugin: function(parent, filename) {
+    exposeClientPlugin: function(parent, filename) {
         this.assets.plugins.unshift(require.resolve(filename));
     },
 
-    loadClientVendor: function(parent, filename) {
+    exposeClientVendor: function(parent, filename) {
         this.assets.vendor.unshift(require.resolve(filename));
     },
 
-    /**
-     * Return a mirror with wrapper for an individual file. Default client-wrap for everything.
-     * @param parent
-     * @param filename
-     * @param [wrapper]
-     * @returns {mirror}
-     */
-    loadMirror: function(parent, filename, wrapper) {
+    makeMirror: function(parent, filename, wrapper, sort) {
         wrapper = wrapper || Bones.utils.wrapClientPlugin;
+        // TODO: find a default for sort.
         return new mirror([ require.resolve(filename) ], {
             type: '.js',
             wrapper: wrapper
+        });
+    },
+
+    // TODO: generalize to take a list of folders to scan and enact a callback on
+    loadClientPlugin: function(parent, dir) {
+        if (!dir) return false;
+        var that = this;
+        var folders = ['shared', 'client'];
+        var files = [];
+
+        // read directory and filter out non-files, prefixes/suffixes, and non-wrapped core files.
+        folders.forEach(function(folder) {
+            var folderPath = path.join(dir, folder);
+            if (!fs.existsSync(folderPath)) return;
+            files = fs.readdirSync(folderPath);
+            files = _.each(files, function(file) {
+                var filePath = require.resolve(path.join(folderPath, file));
+                var reject = fs.statSync(filePath).isDirectory();
+                reject = reject || file.match(/^(.+)\.(prefix|suffix)\.js$/);
+                reject = reject || (_.indexOf(that.assets.core, filePath) !== -1);
+                if (!reject) {
+                    that.exposeClientPlugin(filePath);
+                }
+            });
         });
     },
 
@@ -129,25 +147,8 @@ servers.Route.augment({
         var that = this;
         app.directories.forEach(function(dir) {
             if (path.basename(dir).match(/bones$/)) return false;
-            var folders = ['shared', 'client'];
-            var files = [];
-
-            // read directory and filter out non-files, prefixes/suffixes, and non-wrapped core files.
-            folders.forEach(function(folder) {
-                var folderPath = path.join(dir, folder);
-                if (!fs.existsSync(folderPath)) return;
-                files = fs.readdirSync(folderPath);
-                files = _.each(files, function(file) {
-                    var filePath = require.resolve(path.join(folderPath, file));
-                    var reject = fs.statSync(filePath).isDirectory();
-                    reject = reject || file.match(/^(.+)\.(prefix|suffix)\.js$/);
-                    reject = reject || (_.indexOf(that.assets.core, filePath) !== -1);
-                    if (!reject) {
-                        that.loadClientPlugin(filePath);
-                    }
-                });
-            });
-        });
+            this.loadClientPlugin(dir);
+        }).bind(this);
     },
 
     initializeModels: function(parent, app) {

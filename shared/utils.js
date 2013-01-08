@@ -1,4 +1,4 @@
-// TODO: hate this require structure. Please change. Should this be utils?
+// TODO: hate this require structure. Please change. Push into a wrapper for shared files?
 var debug = '';
 if (typeof process !== 'undefined' && process.versions && process.versions.node) {
     var Bones = require(global.__BonesPath__ || 'bones');
@@ -8,14 +8,9 @@ if (typeof process !== 'undefined' && process.versions && process.versions.node)
     debug = console.log;
 }
 
-console.log('Bones: ', Bones);
-
 var Bones = Bones || {};
 var utils = Bones.utils = Bones.utils || {};
-console.log('utils: ', utils);
-var $ = Bones.$ || $;
 var templates = templates || Bones.plugin.templates;
-console.log('templates: ', templates);
 var models = models || Bones.plugin.models;
 
 if (typeof process !== 'undefined' && process.versions && process.versions.node) {
@@ -34,10 +29,12 @@ if (typeof process !== 'undefined' && process.versions && process.versions.node)
  */
 utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
     var view    = '',
-        model   = '';
+        model   = '',
+        viewSelector = Bones.server ? 'div[data-view^=""]' : 'div[data-view]',
+        shouldReplace = shouldReplace || true;
 
     element = _.isString(element) ? $(element) : element;
-    element.$('div[data-view^=""]').each(function() {
+    $(viewSelector, element).each(function() {
         options = (store && $(this).attr('data-id') && store[$(this).attr('data-id')])
                 ? store[$(this).attr('data-id')]
                 : {};
@@ -52,8 +49,6 @@ utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
             model = new models[$(this).attr('data-model')](model);
             options.model = model;
 
-            // TODO: clarify collision behavior for data-ids sent from the server
-            // versus the temporary object counter
             if ($(this).attr('data-id')) {
                 model.id = $(this).attr('data-id');
             }
@@ -61,16 +56,18 @@ utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
 
         view = new views[$(this).attr('data-view')](options);
 
-        // render if no content, else move the html to the view
-        if (!$(this).children[0]) {
-            view.renderAll ? view.renderAll(store) : utils.renderAll(view, store);
+        // attach if content, else fresh top-down rendering, so render
+        if (this.children.length > 0) {
+            view.$el.html($(this).html());
         } else {
             // TODO: what to do here if we use outerHtml? use the selector?
-            view.html($(this).html());
+            view.renderAll ? view.renderAll(store) : utils.renderAll(view, store);
         }
 
+        // should replace is the default for rendering, because
+        // it should be used primarily client-side.
         if (shouldReplace) {
-            $(this).replaceWith(view.el);
+            $(this).replaceWith(view.$el);
         } else {
             $(this).html(view.html());
         }
@@ -99,24 +96,14 @@ utils.renderAll = function(view, store) {
  */
 utils.templateSubviews = function templateSubviews(html, store, selector, shouldReplace) {
     var options = {},
-        element = selector ? $(selector) : $('<div/>').html(html);
+        element = selector ? $(selector) : $('<div/>').html(html),
+        viewSelector = Bones.server ? 'div[data-view^=""]' : 'div[data-view]';
 
-    debug('debug html: ', element.html());
-    // XXX: I think this selector is wrong, need to fix this somehow.
-    var elements = $('div[data-view^=""]', element);
-    debug('elements: ', elements);
-    $('div[data-view^=""]', element).each(function() {
-
-//        if ($(this).attr('data-model') && models[$(this).attr('data-model')]) {
-//            var model = new models[$(this).attr('data-model')]();
-//        }
-//        debug('this: ', this);
-//        debug('this html: ', $(this).html());
-
+    $(viewSelector, element).each(function() {
         options = (store && $(this).attr('data-id')) ? store[$(this).attr('data-id')] : {};
-//        debug('subviews : data-view name: ', $(this).attr('data-view'));
+        debug('subviews : data-view name: ', $(this).attr('data-view'));
         html = utils.templateAll($(this).attr('data-view'), options, store);
-//        debug('subviews : data-view html: ', html);
+        debug('subviews : data-view html: ', html);
         if (shouldReplace) {
             debug('replacing');
             $(this).replaceWith(html);
@@ -143,14 +130,11 @@ utils.templateSubviews = function templateSubviews(html, store, selector, should
  * @returns {String} of rendered html
  */
 utils.templateAll = function templateAll(title, options, store) {
-    // store will be accessed here in order to retrieve the data
     store = store || utils.makeStore();
     options = options || {};
     _.extend(options, {
         partial: utils.makePartialHelperWithStore(store)
     });
-    debug('title: ', title);
-    debug('options: ', options);
     return utils.templateSubviews(templates[title](options), store);
 };
 
@@ -165,19 +149,16 @@ utils.partial = function(view, options, store) {
         options = options || {},
         model   = {};
 
-//    if (options.toObject) {
-//        debug('******* options.toObject exists! *******');
-//    }
-
-//    // i'm sure they have their reasons
-//    options = options.toObject ? options.toObject() : options;
-    debug('options: ', options);
-    // XXX: should replace doesn't add data-model if it exists?
     if (options.model) {
-        // guess at what the model name may be:
-        // string, Backbone instance/class, Mongoose model/collection name)
+        // guess name: string, Backbone instance/class, Mongoose model/collection name)
         model = options.model;
-        title = _.isString(model) ? model : model.title || model.constructor.title || model.modelName || utils.singularize(model.collection.name);
+        // XXX: find a way to include model name rather than derive from collection.
+        title = _.isString(model)
+                ? model
+                : model.title
+                || model.constructor.title
+                || model.modelName
+                || utils.capitalizeFirstLetter(utils.singularize(model.collection.name));
 
         // if title is defined, add data-model attribute
         if (title) {
@@ -195,9 +176,6 @@ utils.partial = function(view, options, store) {
         // non-blocking so should be okay here right since stores are only accessible by its request?
         // TODO: confirm concurrency-safe
         id = store.nextId();
-
-        // is it a document/model? or just an object?
-        //store[id] = options.toObject ? options.toObject() : options;
         store[id] = options;
         html += ' data-id="' + id + '"';
     }

@@ -86,7 +86,7 @@ utils.loadServerPlugin = function(parentDir) {
             require(path.join(directory, file));
         });
     });
-}
+};
 
 /**
  * XXX: this doesn't return the code, properly
