@@ -8,7 +8,15 @@ var tests = [
 ];
 
 describe('Templating and rendering', function() {
-    bonesTest.utils.initStart(server);
+    before(function(done) {
+        server.start(done);
+    });
+
+    after(function(done) {
+        server.on('close', done);
+        try { server.close(); }
+        catch (err) { done();  } // server already closed.
+    });
 
     describe('partial templating', function() {
         it('should create a placeholder element', function(done) {

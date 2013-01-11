@@ -79,6 +79,7 @@ server.prototype.initializeBackboneApi = function(backboneModel, options) {
 
     try {
         url = Bones.utils.getUrl(model);
+        debug('wtf url: ', url);
     } catch(error) {
         return debug('initializeBackboneApi - cannot create API point for: ', backboneModel);
     };

@@ -3,4 +3,3 @@
 --timeout 3000
 --slow 300
 --globals i
---bail

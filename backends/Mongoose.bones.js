@@ -31,7 +31,7 @@ backend.sync = function(req, res, next) {
     case 'PUT':
         // XXX: Bug in mongoose so findByIdAndUpdate
         // fails at this time if document is not initialized.
-        // TODO: Check again when we can bump versions.
+        // TODO: Check again when we bump versions.
         if (req.body._id) delete req.body._id;
         req.model.db.update({ _id: req.model.id }, req.body, function(err, document) {
             if (err) return next(new Error.HTTP(err, 500));
@@ -50,3 +50,64 @@ backend.sync = function(req, res, next) {
         return res.send(new Error.HTTP('Unknown request method: ' + req.method, 500));
     }
 };
+
+/**
+ * .
+ */
+backend.makeGetConnection = function(collection) {
+    var getConnection = '',
+        queries = {};
+    if (_.isString(collection)) {
+        getConnection = function() {
+            debug('collection title: ', collection);
+            return Bones.plugin.mongooseModels[collection];
+        };
+    } else if (_.isObject(collection)) {
+        getConnection = function() {
+            return collection;
+        };
+    } else {
+        return false;
+    }
+
+    debug('getConnection: ', getConnection);
+    return function(parent) {
+        debug('arguments: ', arguments);
+        debug('arguments: ', arguments[0]);
+        debug('arguments: ', arguments[1]);
+        var args = Array.prototype.slice.call(arguments, 1);
+        debug('args: ', args);
+        debug('Bones.plugin.mongooseModels: ', Bones.plugin.mongooseModels);
+        args = [ getConnection() ].concat(args);
+        debug('args after concatenation: ', args);
+        parent.apply(this, args);
+    };
+};
+
+/**
+ *
+ *
+ */
+backend.mixinQueries = function(collection) {
+    var title = collection.title || collection.constructor.title;
+    title = Bones.utils.singularize(title);
+    Bones.Backend.extendWithPre(collection, this.prototype, backend.makeGetConnection(title, Bones.plugin));
+};
+
+/**
+ * Pass this.
+ *
+ * XXX: this doesn't work.  I need to pass the this pointer, but if someone was using this, couldn't they just?
+ */
+backend.mixinPrototypeQueries = function(collection, pre) {
+    pre = pre ? pre : function() {
+        if (this.db) {
+            return this.db;
+        } else {
+            return false;
+        }
+    };
+    collection.prototype.getConnection = pre;
+    Bones.Backend.extendWithPre(collection.prototype, this, pre);
+};
+

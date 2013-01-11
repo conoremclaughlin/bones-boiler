@@ -1,13 +1,13 @@
 var Bones = require(global.__BonesPath__ || 'bones');
 var Backbone = Bones.Backbone;
 var _ = require('underscore');
+var debug = require('debug')('bones-boiler:backend');
+var util = require('util');
 
 module.exports = Backend;
 
 function Backend(plugin, callback) {
-    this.bootstrap(plugin, function() {
-        this.initialize(plugin, callback);
-    }.bind(this));
+    this.initialize(plugin, callback);
 };
 
 Backend.augment = Backbone.Router.augment;
@@ -17,15 +17,50 @@ Backend.toString = function() {
     return '<Backend ' + this.title + '>';
 };
 
-Backend.prototype.bootstrap = function(plugin, callback) {
-    callback();
+/**
+ * includePre
+ *
+ * @requires shared/utils.js
+ * @param {Mixed} collection pointer or string name of a collection
+ * @param {Object} collections
+ * @returns
+ */
+// Use cases:
+// 1. use it in the initialize method and just include the functionality once it's available;
+// 2. use at your own discretion.  can fail at run-time.
+// XXX: chicken and the egg problem. How to deal with initializing a db connection and using it.
+// XXX: oh shit.  Backbone copies 'static' methods and properties to the new object.
+// XXX: maybe the problem here is there should be a strict abstraction between backends (mongoose) and backbone
+// TODO: should this kind of method be on the client-side as well?  For example, if a client-side model wants to retrieve the latest of its
+// statistics, use something similar to the include.  Some form of query (http method) instead.
+// TODO: consider a one-to-one mapping between a backend and some form of enumerable client-side object.
+// TODO: should the next step be to just initialize mongoose models with
+// we shouldn't force someone to use mongoose as a backend, though.. what if they
+// want to use mysql or couchdb or anything else?  Redis? yeah, we can't explicitly do away with backbone models and just favor
+// mongoose.  The question is, what do you use to compliment your backbone models with server-side capabilities
+// without creating leaky memory footprints from populating a collection when all you need to do is query a collection
+// and get, format, and send a set of records (json, etc.?). tricky. tricky.
+// XXX: is this just redundant with the plugin architecture of mongoose?
+// TODO: should this be called augment or extend?
+Backend.extendWithPre = function(destination, source, pre) {
+    var wrapped = {};
+//    debug('source: ', util.inspect(source));
+    // wrap only functions
+    _.each(source, function(property, key) {
+        if (_.isFunction(property)) {
+            wrapped[key] = _.wrap(property, pre);
+        }
+    });
+    destination = _.extend(destination, wrapped);
+//    debug('wrapped: ', wrapped);
+//    debug('destination: ', destination);
+    return destination;
 };
 
+/**
+ *********************** All the stuff below this is brainstorming to be changed! *********************************
+ */
 Backend.prototype.initialize = function(plugin, callback) {};
-
-Backend.prototype.toString = function() {
-    return '[Backend ' + this.constructor.title + ']';
-};
 
 /**
  * What else does a backend commonly need? A method to create a query (whitelisting, blacklisting, JSON parsing?, defaults)

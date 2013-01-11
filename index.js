@@ -1,21 +1,15 @@
-var Bones = require(global.__BonesPath__ || 'bones');
+var path = require('path');
+var bonesPath = global.__BonesPath || 'bones';
+var Bones = require(bonesPath);
 
 require('./server/utils');
 
+Bones.utils.loadAllWrappers(path.join(require.resolve(bonesPath), '..'));
+
 // TODO: include in Bones.plugin.load wrapper, but
 // small chance can break things if other plugin writers
-// not disciplined enough.
+// not disciplined enough.  Move this to plugin.load to load Bones modifications.
 Bones.utils.loadServerPlugin(__dirname);
-
-/*require('./shared/utils');
-require('./server/plugin');
-
-// Override bones.sync and backbone.sync methods with mongoose handlers.
-require('./server/backbone');
-
-// Add pre-flight task queue to the start of a server.
-require('./server/server');
-*/
 
 // Form extends View so add forms to the views folder
 Bones.Backbone.Form = require('backbone-forms/distribution/backbone-forms');
@@ -25,12 +19,15 @@ Bones.utils.registerWrapperForFile('backbone.marionette/lib/backbone.marionette.
 Bones.Backbone.Marionette = require('backbone.marionette/lib/backbone.marionette.js');
 
 Bones.Backend = require('./server/backend');
+
 Bones.plugin.backends = {};
 
 Bones.plugin.load = _.wrap(Bones.plugin.load, function(parent, dir) {
-    parent.call(this, dir);
     this.require(dir, 'backends');
+    parent.call(this, dir);
     return this;
 });
+
+require('./backends/Mongoose');
 
 Bones.load(__dirname);

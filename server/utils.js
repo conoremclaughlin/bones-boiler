@@ -1,12 +1,35 @@
 var fs    = require('fs');
-var path  =  require('path');
+var path  = require('path');
 var Bones = require(global.__BonesPath__ || 'bones');
 var utils = Bones.utils;
 
+//Load prefix and suffix JS files into an object, which can then be used as
+//wrappers.
+//TODO: optionally compact the code.
 /**
- * Extend will overwrite only when plugin.js is loaded outside a specific function scope. Hard-coding path from this index.js file for now
+ * credit to @makara and markara/bones for the code.
  */
-utils.wrappersServer = _.extend(utils.wrappersServer, utils.loadWrappers(__dirname));
+utils.loadWrappers = function(wrapperDir) {
+    var wrappers = {};
+    if (!fs.existsSync(wrapperDir)) return false;
+    fs.readdirSync(wrapperDir).forEach(function(name) {
+        var match = name.match(/^(.+)\.(prefix|suffix)\.js$/);
+        if (match) {
+            wrappers[match[1]] = wrappers[match[1]] || {};
+            wrappers[match[1]][match[2]] =
+            fs.readFileSync(path.join(wrapperDir, name), 'utf8');
+        }
+    });
+    return wrappers;
+};
+
+utils.loadAllWrappers = function(pluginDir) {
+    utils.wrappersServer = utils.wrappersServer || {};
+    utils.wrappersClient = utils.wrappersClient || {};
+    utils.wrappersServer = _.extend(utils.wrappersServer, utils.loadWrappers(path.join(pluginDir, 'server')));
+    utils.wrappersServer = _.extend(utils.wrappersServer, utils.loadWrappers(path.join(pluginDir, 'server/wrappers')));
+    utils.wrappersClient = _.extend(utils.wrappersClient, utils.loadWrappers(path.join(pluginDir, 'client')));
+};
 
 /**
  * A bindAll that doesn't recurse down the prototype-chain.  Only binds the

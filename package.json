@@ -17,13 +17,13 @@
   "author": "conoremclaughlin",
   "license": "BSD",
   "dependencies": {
-    "js-base64": "git://github.com/dankogai/js-base64.git",
+    "bones": "~2.4.0",
     "yaml-front-matter": "1.x.x",
     "backbone-forms": "0.10.x",
     "express-validator": "0.3.x"
   },
   "devDependencies": {
-    "bones-test": "0.0.x",
+    "bones-test": "git://github.com/marionettejs/backbone.marionette.git",
     "debug": "0.x.x"
   }
 }

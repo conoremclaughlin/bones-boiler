@@ -28,8 +28,8 @@ if (typeof process !== 'undefined' && process.versions && process.versions.node)
  * @returns element with newly rendered subviews.
  */
 utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
-    var view    = '',
-        model   = '',
+    var view = '',
+        model = '',
         viewSelector = Bones.server ? 'div[data-view^=""]' : 'div[data-view]',
         shouldReplace = shouldReplace || true;
 
