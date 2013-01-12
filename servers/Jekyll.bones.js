@@ -19,9 +19,8 @@ server = servers.Base.extend();
  * Augment to add static pages availability from the root path.
  */
 server.prototype.initialize = function(app) {
-    _.bindAll(this, 'initializeStaticPages', 'initializeStaticDir', 'pageHandler');
+    _.bindAll(this, 'initializeStaticPages', 'pageHandler');
     this.initializeStaticPages(app, 'templates/source/pages');
-    this.initializeStaticDir('/', 'templates/compiled/public');
     debug('exposed following static page routes: ', this.routes.routes);
     return this;
 };
@@ -35,20 +34,11 @@ server.prototype.pageHandler = function(page) {
     // Render the page once.
     return function loadPage(req, res, next) {
         // TODO: set logged-in user or whatever.
+        // TODO: set up a handle to just send the static page as well.
         res.locals.template = templates.Page;
         res.locals.main = Bones.plugin.pages[page].content;
         return next();
     };
-};
-
-/**
- * Override this to add a static directory
- * TODO: need? probably not lol
- */
-server.prototype.initializeStaticDir = function(link, path) {
-    this.get(link, express['static'](path, {
-        maxAge : env === 'production' ? 3600 * 1000 : 0
-    }));
 };
 
 /**
@@ -60,7 +50,7 @@ server.prototype.initializeStaticPages = function(app, pages) {
     var pagesPath = '';
     var files = [];
     var front = '';
-
+    debug('app: ', app);
     app.directories.forEach(function(dir) {
         debug('exposing static pages for dir: ', dir);
 

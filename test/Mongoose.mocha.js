@@ -1,22 +1,11 @@
-// *************************** REGRESSION ***************************
-// 1. test if Bones.sync has been set from Bones.plugins.backends.Mongoose.sync
-// 2.
-
-
-// ***************************** TESTS ******************************
-
 process.env.NODE_ENV = 'test';
-
 require('./fixture');
+var _ = require('underscore'),
+    bonesTest = require('bones-test'),
+    server = bonesTest.server();
 
-var _ = require('underscore');
-var bonesTest = require('bones-test');
-
-// TODO: change how to require server.
-var server = bonesTest.server();
 // Write to a test database.
 // TODO: write an uninstall method for the test database.
-server.plugin.config.mongoName += '-test';
 
 describe('Mongoose', function() {
     before(function(done) {
@@ -24,9 +13,8 @@ describe('Mongoose', function() {
     });
 
     after(function(done) {
-        server.on('close', done);
-        try { server.close(); }
-        catch (err) { done();  } // server already closed.
+        try { server.close(done); }
+        catch (err) { } // server already closed.
     });
 
     it('should be a backend', function(done) {
@@ -35,8 +23,7 @@ describe('Mongoose', function() {
         done();
     });
 
-    it('should initialize and store db models in plugin.app', function(done) {
-        server.plugin.should.have.property('app').should.be.a('object');
+    it('should initialize and store db models in plugin', function(done) {
         server.plugin.should.have.property('mongooseModels').should.be.a('object');
         done();
     });
@@ -51,5 +38,9 @@ describe('Mongoose', function() {
         } catch(err) {
             return done(err);
         }
+    });
+
+    it('should mixin queries with the getConnection plugin', function(done) {
+        done('implement me');
     });
 });

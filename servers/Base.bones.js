@@ -25,14 +25,12 @@ server.prototype.send = function(req, res) {
         startup: '(function() { Bones.initialize(' + initialize.toString() + '); Bones.start(); })();'
     });
 
-    // console.log('[debug Base.send] response: ', debug);
-
     // Send the page to the client.
     res.send(template(options));
 };
 
 server.prototype.sendJson = function(req, res) {
-    if (!res.locals.model) console.error('[error base.sendjson] no response model!!!');
+    if (!res.locals.model) console.error('[error base.sendJson] no response model!');
     var json = res.locals.model.toJSON ? res.locals.model.toJSON() : res.locals.model;
     return res.json(json);
 };

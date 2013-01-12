@@ -19,16 +19,11 @@ servers.Route.augment({
     initialize : function(parent, app) {
         // Add backbone-forms as a vendor serving.
         // @see Bones/servers/Route for mirror urls
-        debug('getting here? this: ', this);
         _.bindAll(this, 'exposeClientPlugin', 'exposeClientVendor', 'exposeClientCore', 'loadClientPlugin', 'loadClientPlugins');
-        debug('getting here? this: ', this);
         this.exposeClientVendor('backbone-forms/distribution/backbone-forms');
         this.exposeClientCore('../client/utils');
         this.loadClientPlugin(path.join(__dirname, '..'));
-        console.log('bones-boiler route assets: ', this.assets);
-        debug('getting here? parent: ', parent);
         parent.call(this, app);
-        debug('getting here? this: ', this);
         this.use(new servers['Boiler'](app));
         this.use(new servers['Jekyll'](app));
     },

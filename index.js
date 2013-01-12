@@ -20,9 +20,8 @@ Bones.Backbone.Marionette = require('backbone.marionette/lib/backbone.marionette
 
 Bones.Backend = require('./server/backend');
 
-Bones.plugin.backends = {};
-
 Bones.plugin.load = _.wrap(Bones.plugin.load, function(parent, dir) {
+    this.loadCompiled(dir);
     this.require(dir, 'backends');
     parent.call(this, dir);
     return this;

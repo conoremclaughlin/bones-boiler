@@ -66,7 +66,7 @@ describe('Templating and rendering', function() {
     describe('templateSubviews', function() {
         var html = '';
 
-        it('should replace all partial placeholders with rendered html', function() {
+        it('should replace all partial placeholders with rendered html', function(done) {
             html = templates.test({
                 data: tests,
                 partial: server.utils.makePartialHelper(server.utils.makeStore())
@@ -82,7 +82,7 @@ describe('Templating and rendering', function() {
             done();
         });
 
-        it('should replace the data-id for the temporary object with a model.id', function() {
+        it('should replace the data-id for the temporary object with a model.id', function(done) {
             var i = 5;
             $(element, 'div[data-view^=""]').forEach(function() {
                 $(this).attr('data-id').should.equal(i);
@@ -95,7 +95,7 @@ describe('Templating and rendering', function() {
     describe('templateAll', function() {
         var html = '';
 
-        it('should recursively template the view and its subviews', function() {
+        it('should recursively template the view and its subviews', function(done) {
             html = server.utils.templateAll('test', { data: tests });
             var element = $(html);
             $(element, 'div[data-view^=""]').length().should.equal(2);
@@ -111,7 +111,7 @@ describe('Templating and rendering', function() {
             views = [],
             rendered = '';
 
-        it('should attach views to pre-rendered placeholders', function() {
+        it('should attach views to pre-rendered placeholders', function(done) {
             html = server.utils.templateAll('test', { data: tests });
             views = server.utils.renderSubviews(html);
             views[0].model.id.should.equal(5);
@@ -122,17 +122,17 @@ describe('Templating and rendering', function() {
             done();
         });
 
-        it('should replace placeholders with rendered views if shouldReplace is true', function() {
+        it('should replace placeholders with rendered views if shouldReplace is true', function(done) {
             done('implement me');
         });
 
-        it('should replace the data-id with a model id if a model argument is given', function() {
+        it('should replace the data-id with a model id if a model argument is given', function(done) {
             done('implement me');
         });
     });
 
     describe('renderAll', function() {
-       it('should recursively render the view and its subviews', function() {
+       it('should recursively render the view and its subviews', function(done) {
            done('implement me');
        });
     });

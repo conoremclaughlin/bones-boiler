@@ -1,12 +1,17 @@
 require('./fixture');
+var debug = require('debug')('bones-boiler:Backend.mocha');
 var bonesTest = require('bones-test');
+var Bones = require(global.__BonesPath__ || 'bones');
+var Backend = Bones.Backend;
 var server = bonesTest.server();
 
 describe('Backend', function() {
-    var plugin = server.plugin;
+    var plugin;
+    var Backend = Bones.Backend;
 
     before(function(done) {
         server.start(done);
+        plugin = server.plugin;
     });
 
     after(function(done) {
@@ -15,46 +20,46 @@ describe('Backend', function() {
         catch (err) { done();  } // server already closed.
     });
 
-    it('should be in plugin', function(done) {
-        plugin.should.have('Backend').should.be.a('Object');
+    it('should be a class object within Bones', function(done) {
+        Bones.should.have.property('Backend');
+        done();
+    });
+
+    it('should add a backends object to plugin', function(done) {
+        plugin.should.have.property('backends').and.be.a('object');
         done();
     });
 
     it('should have a static extendWithPre function', function(done) {
-        plugin.Backend.should.have('extendWithPre').should.be.a('Function');
+        Backend.should.have.property('extendWithPre').and.be.a('function');
         done();
     });
 
     it('should have a static toString function', function(done) {
-        plugin.Backend.should.have('toString');
-        done();
-    });
-
-    it('should have no toString method in the prototype', function(done) {
-        plugin.Backend.prototype.should.not.have('toString');
+        Backend.should.have.property('toString').and.be.a('function');
         done();
     });
 
     describe('extendWithPre', function() {
         var test = [1, 2];
         var pre = function(parent) {
-            parent.call(test);
-        };
-        var hello = function(micCheck) {
-            return micCheck;
-        };
-        var encore = function(micCheck) {
-            return micCheck.append(3);
+            return parent.call(this, test);
         };
         var queries = {
-            after: after,
-            pre: pre
+            hello: function(micCheck) {
+                return micCheck;
+            },
+            encore: function(micCheck) {
+                micCheck.push(3);
+                return micCheck;
+            }
         };
+        var queriesAfter = {};
 
         it('should wrap all functions in an object with a "pre" function', function(done) {
-            var queriesAfter = plugin.Backend.extendWithPre(test);
-            queriesAfter.hello().should.be.a('Array').should.have.length(2);
-            queriesAfter.encore().should.be.a('Array').should.have.length(3);
+            queriesAfter = Backend.extendWithPre(queriesAfter, queries, pre);
+            queriesAfter.hello().should.have.length(2);
+            queriesAfter.encore().should.have.length(3);
             done();
         });
     });

@@ -44,17 +44,15 @@ Backend.toString = function() {
 // TODO: should this be called augment or extend?
 Backend.extendWithPre = function(destination, source, pre) {
     var wrapped = {};
-//    debug('source: ', util.inspect(source));
+
     // wrap only functions
     _.each(source, function(property, key) {
         if (_.isFunction(property)) {
             wrapped[key] = _.wrap(property, pre);
         }
     });
-    destination = _.extend(destination, wrapped);
-//    debug('wrapped: ', wrapped);
-//    debug('destination: ', destination);
-    return destination;
+    destination = _.extend(destination, source, wrapped);
+    return _.extend(source, wrapped);
 };
 
 /**
