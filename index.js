@@ -1,6 +1,8 @@
 var path = require('path');
-var bonesPath = global.__BonesPath || 'bones';
+var bonesPath = global.__BonesPath__ || 'bones';
 var Bones = require(bonesPath);
+
+Bones.Backbone.setDomLibrary(Bones.$);
 
 require('./server/utils');
 
@@ -15,6 +17,7 @@ Bones.utils.loadServerPlugin(__dirname);
 Bones.Backbone.Form = require('backbone-forms/distribution/backbone-forms');
 
 // What is going on here.
+// TODO: push into plugin or utils mayhaps.
 Bones.utils.registerWrapperForFile('backbone.marionette/lib/backbone.marionette.js', 'backbone-marionette');
 Bones.Backbone.Marionette = require('backbone.marionette/lib/backbone.marionette.js');
 

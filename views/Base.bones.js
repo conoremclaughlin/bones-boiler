@@ -1,7 +1,7 @@
 view = Backbone.View.extend({
     renderAll: function() {
-        if (!this.render) return false;
-        return Bones.utils.renderAll(this);
+        if (!this.constructor.title) return false;
+        return Bones.utils.renderAll(this, { data: this.collection });
     },
 
     // TODO: capitalize Html to HTML

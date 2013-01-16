@@ -90,8 +90,9 @@ backend.makeGetConnection = function(collection) {
  */
 backend.mixinQueries = function(collection) {
     var title = collection.title || collection.constructor.title;
+    if (!title) return false;
     title = Bones.utils.singularize(title);
-    Bones.Backend.extendWithPre(collection, this.prototype, backend.makeGetConnection(title, Bones.plugin));
+    Bones.Backend.extendWithPre(collection, this.prototype, backend.makeGetConnection(title));
 };
 
 /**

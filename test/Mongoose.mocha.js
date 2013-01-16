@@ -2,12 +2,14 @@ process.env.NODE_ENV = 'test';
 require('./fixture');
 var _ = require('underscore'),
     bonesTest = require('bones-test'),
-    server = bonesTest.server();
+    server = bonesTest.server(),
+    Bones = require(global.__BonesPath__ || 'bones');
 
 // Write to a test database.
 // TODO: write an uninstall method for the test database.
 
 describe('Mongoose', function() {
+
     before(function(done) {
         server.start(done);
     });
@@ -29,7 +31,6 @@ describe('Mongoose', function() {
     });
 
     it('should replace Bones.sync with Mongoose.sync', function(done) {
-        var Bones = require(global.__BonesPath__ || 'bones');
         try {
             Bones.sync({}, {}, function(err) {
                 // no model in req argument, so should call next with error.
@@ -40,7 +41,21 @@ describe('Mongoose', function() {
         }
     });
 
+    it('should make a wrapper to add a connection object to a functions arguments', function(done) {
+        function checkConnection(connection, query) {
+            query.should.equal('hello');
+            arguments.should.have.length(2);
+            done();
+        }
+        var wrapper = server.plugin.backends.Mongoose.makeGetConnection('Lorem');
+        var wrapped = _.wrap(checkConnection, wrapper);
+        wrapped('hello');
+    });
+
     it('should mixin queries with the getConnection plugin', function(done) {
-        done('implement me');
+        var model = server.plugin.models.Lorems;
+        Bones.plugin.backends.MonEnumerable.mixinQueries(model);
+        model.should.have.property('getLatest').and.be.a('function');
+        done();
     });
 });

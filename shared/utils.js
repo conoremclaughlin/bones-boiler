@@ -8,10 +8,13 @@ if (typeof process !== 'undefined' && process.versions && process.versions.node)
     debug = console.log;
 }
 
+// TODO: Move this to some sort of shared wrapper
+// I hate how the wrappers displace the line numbers, though
 var Bones = Bones || {};
 var utils = Bones.utils = Bones.utils || {};
 var templates = templates || Bones.plugin.templates;
 var models = models || Bones.plugin.models;
+var views = views || Bones.plugin.views;
 
 if (typeof process !== 'undefined' && process.versions && process.versions.node) {
     module.exports = Bones.utils;
@@ -30,22 +33,22 @@ if (typeof process !== 'undefined' && process.versions && process.versions.node)
 utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
     var view = '',
         model = '',
-        viewSelector = Bones.server ? 'div[data-view^=""]' : 'div[data-view]',
-        shouldReplace = shouldReplace || true;
+        created = {},
+        viewSelector = Bones.server ? 'div[data-view^=""]' : 'div[data-view]';
 
+    shouldReplace = (shouldReplace === undefined) ? true : shouldReplace;
     element = _.isString(element) ? $(element) : element;
+
     $(viewSelector, element).each(function() {
-        options = (store && $(this).attr('data-id') && store[$(this).attr('data-id')])
-                ? store[$(this).attr('data-id')]
-                : {};
+        var viewType = $(this).attr('data-view');
+        var options = (store && $(this).attr('data-id') && store[$(this).attr('data-id')])
+                    ? store[$(this).attr('data-id')]
+                    : {};
 
         // If there's a data-model, we must be attaching, check the data-id and assign.
         // Overwrites model if it's in options.model
         if ($(this).attr('data-model')) {
             model = options.model ? options.model : {};
-            if ($(this).attr('data-id')) {
-                model.id = $(this).attr('data-id');
-            }
             model = new models[$(this).attr('data-model')](model);
             options.model = model;
 
@@ -54,14 +57,15 @@ utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
             }
         }
 
-        view = new views[$(this).attr('data-view')](options);
+        view = new views[viewType](options);
+        created[viewType] = created[viewType] ? created[viewType].push(view) : [ view ];
 
         // attach if content, else fresh top-down rendering, so render
         if (this.children.length > 0) {
             view.$el.html($(this).html());
         } else {
             // TODO: what to do here if we use outerHtml? use the selector?
-            view.renderAll ? view.renderAll(store) : utils.renderAll(view, store);
+            utils.renderAll(view, store);
         }
 
         // should replace is the default for rendering, because
@@ -74,14 +78,21 @@ utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
         // TODO: store the allocated view or use a Factory for both view and model?
     });
     // TODO: how do we return the views? store them?
-    return element;
+    return created;
 };
 
-utils.renderAll = function(view, store) {
-    if (!view.render) return false;
+utils.renderAll = function(view, options, store) {
     store = store || utils.makeStore();
-    view.render();
+    options.partial = utils.makePartialHelperWithStore(store);
+    view.render ? view.render() : view.$el.html(templates[view.constructor.title](options));
     return utils.renderSubviews(view.el, store);
+},
+
+// TODO: could wrap template..... but no.  Too shady.
+utils.template = function(title, options) {
+    options = options || {};
+    options.partial = utils.makePartialHelperWithStore(store);
+    templates[title](options);
 },
 
 /**
@@ -101,15 +112,11 @@ utils.templateSubviews = function templateSubviews(html, store, selector, should
 
     $(viewSelector, element).each(function() {
         options = (store && $(this).attr('data-id')) ? store[$(this).attr('data-id')] : {};
-        debug('subviews : data-view name: ', $(this).attr('data-view'));
         html = utils.templateAll($(this).attr('data-view'), options, store);
-        debug('subviews : data-view html: ', html);
         if (shouldReplace) {
-            debug('replacing');
             $(this).replaceWith(html);
         } else {
             $(this).html(html);
-            debug('[templateSubviews] not replacing.');
             if (options && options.model && (options.model.id || options.model._id)) {
                 var id = options.model.id || options.model._id;
                 $(this).attr('data-id', id);
@@ -149,7 +156,7 @@ utils.partial = function(view, options, store) {
         options = options || {},
         model   = {};
 
-    if (options.model) {
+    if (options.model && Bones.server) {
         // guess name: string, Backbone instance/class, Mongoose model/collection name)
         model = options.model;
         // XXX: find a way to include model name rather than derive from collection.
@@ -157,19 +164,21 @@ utils.partial = function(view, options, store) {
                 ? model
                 : model.title
                 || model.constructor.title
-                || model.modelName
-                || utils.capitalizeFirstLetter(utils.singularize(model.collection.name));
+                || model.modelName;
+        title = !title && model.collection
+                ? utils.capitalizeFirstLetter(utils.singularize(model.collection.name))
+                : title;
 
         // if title is defined, add data-model attribute
         if (title) {
             html += ' data-model="' + title + '"';
         }
-        debug('model.constructor.title: ', model.constructor.title);
-        debug('model.title: ', title);
-        debug('model.modelName: ', model.modelName);
-        debug('model.model: ', model.model);
-        debug('model.schema: ', model.schema);
-        debug('model.collection: ', model.collection);
+//        debug('model.constructor.title: ', model.constructor.title);
+//        debug('model.title: ', title);
+//        debug('model.modelName: ', model.modelName);
+//        debug('model.model: ', model.model);
+//        debug('model.schema: ', model.schema);
+//        debug('model.collection: ', model.collection);
     }
 
     if (store) {

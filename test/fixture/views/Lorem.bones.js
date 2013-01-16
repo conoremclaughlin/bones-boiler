@@ -4,6 +4,11 @@ view = views.Base.extend({
     },
 
     test: function() {
-        alert('clicked.');
+        return 'clicked';
+    },
+
+    render: function() {
+        this.$el.html(templates['Lorem']({ model: this.model.toJSON() }));
+        return this;
     }
 });

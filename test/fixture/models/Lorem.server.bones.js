@@ -1,5 +1,3 @@
-var store = {};
-
 model = models.Lorem;
 
 model.prototype.dbSchema = model.dbSchema = {

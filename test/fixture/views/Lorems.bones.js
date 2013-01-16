@@ -1,0 +1,1 @@
+view = views.Base.extend({});

@@ -1,1 +1,1 @@
-<p>test - <%= data.name %></p>
+<p>test - <%= model.name %></p>
