@@ -14,7 +14,7 @@ server.prototype.send = function(req, res) {
     options.main = res.locals.main
                     || (res.locals.view
                     ? (res.locals.view.outerHtml
-                    ? res.locals.view.render().outerHtml()
+                    ? res.locals.view.render().outerHTML()
                     : res.locals.view.render().html())
                     : 'Loading');
 

@@ -58,4 +58,10 @@ describe('Mongoose', function() {
         model.should.have.property('getLatest').and.be.a('function');
         done();
     });
+
+    describe('deleteMongoDB command', function() {
+        it('should delete a Mongo database given a a db name', function(done) {
+            done('implement');
+        });
+    });
 });

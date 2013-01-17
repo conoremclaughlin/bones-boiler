@@ -5,7 +5,7 @@ view = Backbone.View.extend({
     },
 
     // TODO: capitalize Html to HTML
-    outerHtml: function() {
+    outerHTML: function() {
         var elem = this.$el;
         var div, temp;
 

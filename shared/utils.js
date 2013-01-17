@@ -173,12 +173,6 @@ utils.partial = function(view, options, store) {
         if (title) {
             html += ' data-model="' + title + '"';
         }
-//        debug('model.constructor.title: ', model.constructor.title);
-//        debug('model.title: ', title);
-//        debug('model.modelName: ', model.modelName);
-//        debug('model.model: ', model.model);
-//        debug('model.schema: ', model.schema);
-//        debug('model.collection: ', model.collection);
     }
 
     if (store) {
