@@ -1,5 +1,5 @@
 var util = require('util')
-  , debug = require('debug')('bones-boiler:base');
+  , debug = require('debug')('bones-boiler:Base');
 
 model = models.Base;
 

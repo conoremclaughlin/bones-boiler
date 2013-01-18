@@ -1,5 +1,7 @@
 var path = require('path');
 
+// Setting global config options, which are accessible
+// from Bones.plugin.config[optionName]
 Bones.Command.options['secret'] = {
     'title': 'secret=[path]',
     'description': 'Path to secret key file.',
@@ -22,8 +24,4 @@ Bones.Command.options['mongoName'] = {
     'title': 'mongoName=[name]',
     'description': 'Mongodb name',
     'default': 'bb'
-};
-
-Bones.Command.prototype.initializeMongoDB = function(plugin, step) {
-    // TODO: implement.
 };

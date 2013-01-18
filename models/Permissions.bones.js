@@ -1,14 +1,20 @@
+
 /**
- * Container now for methods dealing with permissions.
- * Will be expanded later to integrate with other ACL libraries.
- *
- * TODO IMPORTANT: think of that one dude that had the simple acl of lock and let go.
+ * Temporary container for methods dealing with permissions.
+ * TODO: expand into separate lib, investigate acl of lock and let go.
  */
+
 model = Backbone.Model.extend({});
 
 /**
- * Allow only fields specified by the schema or whitelisted methods.
- * No methods specified for a field defaults to 'all' (need flexibility over safety, here)
+ * Allow only properties specified by a schema and whitelisted methods.
+ * No methods specified for a field defaults to 'all.' Flexibility over
+ * safety. My computer security professor would be upset.
+ *
+ * @param {Object} object to parse and filter.
+ * @param {Object} schema to use for filtering.
+ * @param {String} method of HTTP request to filter for.
+ * @returns {Object} of filtered properties.
  */
 model.filter = function(object, schema, method) {
     var filtered = {};
@@ -23,21 +29,13 @@ model.filter = function(object, schema, method) {
 };
 
 /**
- * Return a regular schema without the permissions associated.
- */
-model.getSchema = function(schema) {
-    _.each(_.keys(schema), function(key) {
-        if (key.type && key.methods && _.indexOf(key.methods, method) === -1)
-            return false;
-        filtered[key] = object[key];
-    });
-    return filtered;
-};
-
-/**
- * Recursive function to parse the permissions from a model schema.
- * stores the paths as hash keys for O(1) look-ups.  Filtering is going to be called
- * for every model request or update.
+ * Recursively parses the permissions from a model schema.
+ * Stores the property paths as hash keys for O(1) look-ups.
+ *
+ * @param {String} currentPath descended to this point in the schema.
+ * @param {Object} schema to parse permissions from.
+ * @param {Object} permissions object adding property paths to.
+ * @returns {boolean} executed parsing?
  */
 model.parseSchemaPermissions = function(currentPath, schema, permissions) {
     if (schema === null || !_.isObject(schema)) return false;
@@ -66,10 +64,11 @@ model.parseSchemaPermissions = function(currentPath, schema, permissions) {
  * and adds them to the appropriate method hash to later be used for
  * whitelisting CRUD methods.
  *
- * TODO: write tests.
+ * @param {Object} model's Backbone static definition.
+ * @returns {Object} set of CRUD permission paths.
  */
 model.parsePermissions = function(model) {
+    // start from the root of the schema.
     models.Permissions.parseSchemaPermissions('', model.prototype.dbSchema, model.prototype.permissions);
     return model.prototype.permissions;
 };
-

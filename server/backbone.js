@@ -37,10 +37,7 @@ Backbone.sync = function(method, model, options) {
 
 /**
  * Override Bones.sync or model.sync with a backend solution.
- * No implementation throws an error.
- *
- * @param
- * @returns
+ * Must implement if you don't like errors.
  */
 Bones.sync = Bones.sync || function(req, res, next) {
    /*

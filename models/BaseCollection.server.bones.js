@@ -1,4 +1,4 @@
-var debug = require('debug')('bones-boiler:base');
+var debug = require('debug')('bones-boiler:BaseCollection');
 
 collection = models.BaseCollection;
 

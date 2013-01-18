@@ -3,6 +3,14 @@ var mongoose = require('mongoose')
 
 backend = Bones.Backend.extend();
 
+/**
+ * Express handler that pulls a Backbone model from req.model and
+ * uses its mongoose collection connection (this.db) to perform a CRUD
+ * for the given XMLHTTPRequest method.
+ *
+ * @param {Object} req.model to CRUD.
+ * @returns {Object} res.locals.model record returned.
+ */
 backend.sync = function(req, res, next) {
     if (!req.model) return next(new Error.HTTP('Error occured. No model to sync. Please try again later.', 500));
 
@@ -53,7 +61,10 @@ backend.sync = function(req, res, next) {
 };
 
 /**
- * .
+ * Drop a database like its hot for a given url.
+ *
+ * @param url of target database.
+ * @param callback after connect and drop.
  */
 backend.dropDatabase = function(url, callback) {
     var mongoose = require('mongoose');
@@ -64,7 +75,11 @@ backend.dropDatabase = function(url, callback) {
 };
 
 /**
- * .
+ * Make a function to fetch a connection and unshift the connection
+ * as the first argument to an argument function.
+ *
+ * @param {Mixed} collection string name or collection connection.
+ * @returns {Function} getConnection
  */
 backend.makeGetConnection = function(collection) {
     var getConnection = ''
@@ -90,7 +105,9 @@ backend.makeGetConnection = function(collection) {
 };
 
 /**
- * .
+ * Mixs a backend object's functions into a collection's static methods.
+ *
+ * @param {Object} collection Backbone class definition.
  */
 backend.mixinQueries = function(collection) {
     var title = collection.title || collection.constructor.title;
@@ -100,7 +117,7 @@ backend.mixinQueries = function(collection) {
 };
 
 /**
- * Mixs in a backend object's queries into a collection's prototype
+ * Mixs in a backend object's functions into a collection's prototype
  * with a pre function to fetch a connection.
  *
  * TODO: No tests yet, waiting to complete when decided on more

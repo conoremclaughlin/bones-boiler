@@ -23,7 +23,10 @@ command.options['directory'] = {
 };
 
 /**
- * Great for creating static templates like forms from model schemas.
+ * PublishTemplate for a given model and view. Great for creating
+ * static templates from backbone views for things like forms.
+ *
+ * @see above for prototype.
  */
 command.prototype.initialize = function(plugin, callback) {
     var err = {}
