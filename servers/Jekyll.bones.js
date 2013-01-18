@@ -1,10 +1,8 @@
-var fs      = require('fs');
-var path    = require('path');
-var _       = require('underscore');
-var express = require('express');
-var yaml    = require('yaml-front-matter');
-var env     = process.env.NODE_ENV || 'development';
-var debug   = require('debug')('bones-boiler:page');
+var fs = require('fs')
+  , path = require('path')
+  , _ = Bones._
+  , yaml = require('yaml-front-matter')
+  , debug = require('debug')('bones-boiler:page');
 
 /**
  * TODO: add the app object and some easy way to apply the default template
@@ -19,16 +17,15 @@ server = servers.Base.extend();
  * Augment to add static pages availability from the root path.
  */
 server.prototype.initialize = function(app) {
-    _.bindAll(this, 'initializeStaticPages', 'pageHandler');
+    _.bindAll(this, 'initializeStaticPages', 'makePageHandler');
     this.initializeStaticPages(app, 'templates/source/pages');
-    debug('exposed following static page routes: ', this.routes.routes);
     return this;
 };
 
 /**
  * Return a handler to send the rendered page.
  */
-server.prototype.pageHandler = function(page) {
+server.prototype.makePageHandler = function(page) {
     // TODO: add an app object to store the root level view.
     // TODO: app object also needs to store the Main router.
     // Render the page once.
@@ -50,9 +47,8 @@ server.prototype.initializeStaticPages = function(app, pages) {
     var pagesPath = '';
     var files = [];
     var front = '';
-    debug('app: ', app);
     app.directories.forEach(function(dir) {
-        debug('exposing static pages for dir: ', dir);
+        debug('exposing static jekyll pages for dir: ', dir);
 
         // read directory and filter out non-files.
         pagesPath = path.join(dir, pages);
@@ -66,7 +62,7 @@ server.prototype.initializeStaticPages = function(app, pages) {
         _.each(files, function(file) {
             front = yaml.loadFront(path.join(pagesPath, file), file);
             if (front.url) {
-                self.get(front.url, self.pageHandler(path.basename(file, '.html')), self.send);
+                self.get(front.url, self.makePageHandler(path.basename(file, '.html')), self.send);
             }
         });
     });

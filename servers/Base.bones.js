@@ -1,7 +1,8 @@
 server = Bones.Server.extend();
 
 /**
- * Render and send views to the client with everything the boilerplate needs.
+ * Render and send a boilerplate of views and
+ * models to the client.
  */
 server.prototype.send = function(req, res) {
     // Use requested root template or default to templates.App. No need to
@@ -10,18 +11,17 @@ server.prototype.send = function(req, res) {
     var template = res.locals.template || templates.App;
     var initialize = res.locals.initialize || function(models, views, routers, templates) {};
 
-    // TODO: this is unreadable. change it.
-    options.main = res.locals.main
-                    || (res.locals.view
-                    ? (res.locals.view.outerHtml
-                    ? res.locals.view.render().outerHTML()
-                    : res.locals.view.render().html())
-                    : 'Loading');
+    // precedence: options.main, view.outerHTML, view.html, default
+    options.main = res.locals.main;
+    if (!options.main && res.locals.view) {
+        options.main = res.locals.view.outerHTML ? res.locals.view.render().outerHTML() : res.locals.view.render().html();
+    }
 
     // options.main takes precedence over view in case no need to render, only attach on the client.
     options = _.defaults(options, {
+        main: 'Loading...',
         version: Date.now(),
-        title: 'electriculture',
+        title: 'bones-boiler',
         startup: '(function() { Bones.initialize(' + initialize.toString() + '); Bones.start(); })();'
     });
 
@@ -29,12 +29,21 @@ server.prototype.send = function(req, res) {
     res.send(template(options));
 };
 
+/**
+ * Send a JS object or a JSON model from
+ * res.locals.model to the client.
+ *
+ * @param res.locals.model to or change toJSON()
+ */
 server.prototype.sendJson = function(req, res) {
     if (!res.locals.model) console.error('[error base.sendJson] no response model!');
     var json = res.locals.model.toJSON ? res.locals.model.toJSON() : res.locals.model;
     return res.json(json);
 };
 
+/**
+ * Apply Page template to send boilerplate.
+ */
 server.prototype.sendPage = function(req, res) {
     // TODO: set logged-in user or whatever.
     res.locals.template = templates.Page;
@@ -42,7 +51,9 @@ server.prototype.sendPage = function(req, res) {
 };
 
 /**
- * Create and render a form view for a model and its schema.
+ * Render a form view for a model and its schema.
+ *
+ * @param res.locals.model to initialize the form view with.
  */
 server.prototype.formView = function(req, res, next) {
     var view;

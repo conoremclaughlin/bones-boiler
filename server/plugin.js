@@ -3,7 +3,8 @@ var bonesPath = require.resolve(global.__BonesPath__ || 'bones')
   , fs = require('fs')
   , path = require('path')
   , utils = Bones.utils
-  , plugin = Bones.plugin;
+  , plugin = Bones.plugin
+  , debug = require('debug')('bones-boiler:plugin');
 
 /***************** BEGIN BONES **********************/
 
@@ -69,9 +70,14 @@ require.extensions['.html'] = function(module, filename) {
 // 0.9.2 compatibility
 Bones.Backbone.setDomLibrary(Bones.$);
 
-// load server-side libraries.
+debug('Bones.plugin: ', Bones.plugin);
+
+// initialize plugin additions
 plugin.pages = {};
 plugin.backends = {};
+plugin.bootstrapList = [];
+
+// load server-side libraries
 Bones.Backend = require('./backend');
 Bones.Backbone.Form = require('backbone-forms/distribution/backbone-forms');
 Bones.utils.aliasWrapperForFile('backbone.marionette/lib/backbone.marionette.js', 'backbone-marionette');
