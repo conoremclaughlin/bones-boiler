@@ -4,6 +4,7 @@ servers.Middleware.augment({
 
     /**
      * Removing validateCSRFToken to replace with connect's csrf middleware.
+     * Double CSRF protection makes dealing with static forms difficult by default.
      */
     initialize: function(parent, app) {
         this.use(middleware.sanitizeHost(app));

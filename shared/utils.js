@@ -1,34 +1,32 @@
 // TODO: hate this require structure. Please change. Push into a wrapper for shared files?
-var debug = '';
 if (typeof process !== 'undefined' && process.versions && process.versions.node) {
     var Bones = require(global.__BonesPath__ || 'bones');
+    var debug = require('debug')('bones-boiler:utils');
     module.exports = Bones.utils;
-    debug = require('debug')('bones-boiler:utils');
 } else {
-    debug = console.log;
+    var debug = console.log;
 }
 
-// TODO: Move this to some sort of shared wrapper
-// I hate how the wrappers displace the line numbers, though
-var Bones = Bones || {};
-var utils = Bones.utils = Bones.utils || {};
-var templates = templates || Bones.plugin.templates;
-var models = models || Bones.plugin.models;
-var views = views || Bones.plugin.views;
-
-if (typeof process !== 'undefined' && process.versions && process.versions.node) {
-    module.exports = Bones.utils;
-}
+// TODO: Move this to a prefix and suffix wrapper for shared files
+var Bones = Bones || {}
+  , utils = Bones.utils || {}
+  , templates = templates || Bones.plugin.templates
+  , models = models || Bones.plugin.models
+  , views = views || Bones.plugin.views;
 
 /**
- * Parses information about the subview from the data-id of the div.view
- * and renders if needed, otherwise attach a view if rendered on the server.
- * Finally, replaces the element of the placeholder div.view element with the
- * new view (rendered or just attached).
+ * Parses rendering and initialization info from the data attributes of
+ * any element with the attribute data-view. Only attaches a view if a
+ * element already has inner html, assuming it was sent by the server and was
+ * already rendered. By default replaces the element of the placeholder div[data-view]
+ * with the new view (rendered or attached). If rendering on the server and want
+ * to maintain the data-views for client-side attaching, for example, shouldReplace
+ * needs to be false.
  *
- * @param element to have its subviews rendered.
- * @param [selector] selects and parses an element from the DOM.
- * @returns element with newly rendered subviews.
+ * @param {Mixed} element string to select/instantiate or jQuery element to select on.
+ * @param {Object} [store] to retrieve rendering arguments from.
+ * @param {boolean} [shouldReplace] the div[data-view] with Backbone views. Default true.
+ * @returns {Object} created views.
  */
 utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
     var view = '',
@@ -77,10 +75,18 @@ utils.renderSubviews = function renderSubviews(element, store, shouldReplace) {
         }
         // TODO: store the allocated view or use a Factory for both view and model?
     });
-    // TODO: how do we return the views? store them?
     return created;
 };
 
+/**
+ * Without initializing any view objects, renders the template, and
+ * recursively its subviews. Requires a view have a template with the same name.
+ *
+ * @param {Object} backbone view instance.
+ * @param {Object} [options] to pass to the optional template.
+ * @param {Object} [store] to maintain rendering data.
+ * @returns {Object} of newly created views.
+ */
 utils.renderAll = function(view, options, store) {
     store = store || utils.makeStore();
     options.partial = utils.makePartialHelperWithStore(store);
@@ -88,22 +94,17 @@ utils.renderAll = function(view, options, store) {
     return utils.renderSubviews(view.el, store);
 },
 
-// TODO: could wrap template..... but no.  Too shady.
-utils.template = function(title, options) {
-    options = options || {};
-    options.partial = utils.makePartialHelperWithStore(store);
-    templates[title](options);
-},
-
 /**
- * Use templates to directly render subviews. Data-id hashes must have view names
- * with corresponding templates of the same name.
+ * Parses rendering and initialization info from the data attributes of
+ * any element with the attribute data-view. Templates subviews and replaces
+ * the data-id of a div[data-view] with a model's id if model.id was set
+ * when it was passed to utils.partial.
  *
- * @param html string to parse and render subviews.
- * @param {String} [selector] disregards html and selects a DOM element to iterate. Client-side only.
- * @param {Object} [store]
- * @param {boolean} [replace] the subview placeholder element rather than add templated html.
- * @returns a rendered string of html.
+ * @param {String} html to parse and template subviews.
+ * @param {Object} [store] to retrieve rendering arguments from.
+ * @param {String} [selector] to optionally retrieve an element from the DOM.
+ * @param {boolean} [shouldReplace] the div[data-view] with Backbone views. Default false.
+ * @returns {String} html, templated nice and new.
  */
 utils.templateSubviews = function templateSubviews(html, store, selector, shouldReplace) {
     var options = {},
@@ -129,12 +130,13 @@ utils.templateSubviews = function templateSubviews(html, store, selector, should
 };
 
 /**
- * Without initializing any view objects, renders the template, recursively its subviews.
- * Requires a view have a template with the same name.
+ * Without initializing any view objects, renders the template, and
+ * recursively its subviews. Requires a view have a template with the same name.
  *
- * @param title of the template to render.
- * @param data object to pass to the template.
- * @returns {String} of rendered html
+ * @param {String} title of the template to render.
+ * @param {Object} [options] to pass to the template.
+ * @param {Object} [store] to maintain rendering data.
+ * @returns {String} html, templated nice and new.
  */
 utils.templateAll = function templateAll(title, options, store) {
     store = store || utils.makeStore();
@@ -146,8 +148,18 @@ utils.templateAll = function templateAll(title, options, store) {
 };
 
 /**
- * What if I want to pass in data to the view to be rendered? template blah, blah
- * Problem: the problem right now are worries about collision, what if ids of this kind show, etc.
+ * Helper function to be used inside ERB templates.
+ * It stores data given to it and creates placeholder elements
+ * to later be replaced with the proper template or rendered view.
+ * Allows clean abstraction between the view layer - templates - and
+ * the control layer - a view's event handlers and rendering method.
+ * UI designers can specify exactly where they wish a partial template to be.
+ *
+ * @see http://backstage.soundcloud.com/2012/06/building-the-next-soundcloud/
+ * @param {Mixed} view string title, view instance, or view backbone definition.
+ * @param {Object} [options] data to store.
+ * @param {Object} [store] to hold the data.
+ * @returns {String} html of placeholder  element.
  */
 utils.partial = function(view, options, store) {
     var title   = '',
@@ -190,7 +202,11 @@ utils.partial = function(view, options, store) {
 };
 
 /**
- * .
+ * Make closure for the utils.partial so it has access to a store
+ * and a less crowded prototype.
+ *
+ * @param {Object} store to invoke utils.partial with.
+ * @returns {Function} wrapper for utils.partial(store, ...)
  */
 utils.makePartialHelperWithStore = function(store) {
     return function(view, options) {
@@ -199,7 +215,9 @@ utils.makePartialHelperWithStore = function(store) {
 };
 
 /**
- * .
+ * Makes a store with #nextId() for storing temporary data.
+ *
+ * @returns {Object} store with a nextId fn.
  */
 utils.makeStore = function() {
     var id = 0;
@@ -213,18 +231,18 @@ utils.makeStore = function() {
 };
 
 /**
- * If on the server, use templates to render. If on the client, instantiate
+ * If server, use templates to render. If client, instantiate
  * a view and render it and its subviews.
  *
- * @param view class
- * @param model object
- * @returns html if on the server, view pointer if client.
+ * @param {Mixed} view name or Backbone definition.
+ * @param {Object} options to pass to rendering.
+ * @returns {Mixed} html or view pointer.
  */
 utils.sharedRender = function sharedRender(view, options) {
     // TODO: add data.
     options = options || {};
     if (Bones.server) {
-        return _.templateAll(view, options);
+        return utils.templateAll(view, options);
     } else {
         var v = new view(options);
         v.renderAll();
@@ -233,7 +251,7 @@ utils.sharedRender = function sharedRender(view, options) {
 };
 
 /**
- * Gets url whether it's a property or function.
+ * Gets url from a model whether it's a property or function.
  *
  * @param {Object} object with a url property or function
  * @returns {String} url
@@ -244,12 +262,15 @@ utils.getUrl = function(object) {
 };
 
 /**
+ * Checks object for whether a nested property key exists.
+ *
  * @see: http://stackoverflow.com/questions/2631001/javascript-test-for-existence-of-nested-object-key
+ * @returns {boolean} property exists?
  */
 utils.checkNested = function(obj /*, level1, level2, ... levelN*/) {
-    var args    = Array.prototype.slice.call(arguments),
-        obj     = args.shift(),
-        i       = 0;
+    var args = Array.prototype.slice.call(arguments)
+      , obj = args.shift()
+      , i = 0;
 
     for (i = 0; i < args.length; i++) {
         if (!obj.hasOwnProperty(args[i])) return false;
@@ -259,13 +280,12 @@ utils.checkNested = function(obj /*, level1, level2, ... levelN*/) {
 };
 
 /**
- * Credit to: backbone-forms for this method.
+ * Credit to @powmedia and powmedia/backbone-forms for this method.
  * Gets a nested attribute using a path e.g. 'user.name'
  *
  * @param {Object} obj    Object to fetch attribute from
  * @param {String} path   Attribute path e.g. 'user.name'
- * @return {Mixed}
- * @api private
+ * @return {Mixed} result
  */
 utils.getNested = function(obj, path) {
     var fields = path.split(".");
@@ -276,6 +296,12 @@ utils.getNested = function(obj, path) {
     return result;
 };
 
+/**
+ * Capitalizes first letter of a string.
+ *
+ * @param {String} string to capitalize.
+ * @returns {String} string capitalized.
+ */
 utils.capitalizeFirstLetter = function(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 };

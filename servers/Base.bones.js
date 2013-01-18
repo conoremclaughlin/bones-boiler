@@ -33,7 +33,7 @@ server.prototype.send = function(req, res) {
  * Send a JS object or a JSON model from
  * res.locals.model to the client.
  *
- * @param res.locals.model to or change toJSON()
+ * @param res.locals.model to send.
  */
 server.prototype.sendJson = function(req, res) {
     if (!res.locals.model) console.error('[error base.sendJson] no response model!');

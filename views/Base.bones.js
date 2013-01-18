@@ -5,8 +5,9 @@ view = Backbone.View.extend({
     },
 
     outerHTML: function() {
-        var elem = this.$el;
-        var div, temp;
+        var elem = this.$el
+          , div
+          , temp;
 
         // if outerHTML doesn't exist, create wrapping div and output inner html
         return !elem ? null

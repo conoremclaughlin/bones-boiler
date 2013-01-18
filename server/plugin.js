@@ -70,8 +70,6 @@ require.extensions['.html'] = function(module, filename) {
 // 0.9.2 compatibility
 Bones.Backbone.setDomLibrary(Bones.$);
 
-debug('Bones.plugin: ', Bones.plugin);
-
 // initialize plugin additions
 plugin.pages = {};
 plugin.backends = {};
