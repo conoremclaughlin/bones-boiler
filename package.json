@@ -17,6 +17,7 @@
   "author": "conoremclaughlin",
   "license": "BSD",
   "dependencies": {
+    "async": "0.1.x",
     "bones": "~2.4.0",
     "yaml-front-matter": "1.x.x",
     "backbone-forms": "0.10.x",

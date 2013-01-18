@@ -1,11 +1,13 @@
+var env = process.env.NODE_ENV || 'development';
+
 var fs = require('fs');
 var debug = require('debug')('bones-boiler:Route');
 var path = require('path');
-var env = process.env.NODE_ENV || 'development';
 var _ = require('underscore');
 
-servers.Route.augment({
+debug('augmenting....');
 
+servers.Route.augment({
     assets: {
         vendor:     [],
         core:       [],
@@ -17,12 +19,23 @@ servers.Route.augment({
     },
 
     initialize : function(parent, app) {
+        _.bindAll(this, 'exposeClientPlugin', 'exposeClientVendor', 'exposeClientCore', 'loadClientPlugin', 'loadClientPlugins');
+
+        // Reset our assets with each initialize if testing (starting and stopping server)
+        if (env === 'TEST' || env === 'test') {
+            this.assets = { vendor: [], core: [], models: [], views: [], routers: [], templates: [], plugins: [] };
+        }
+
+        debug('initializing...', this.assets.core);
+        debug('checking prototype.assets...', servers.Route.prototype.assets.core);
         // Add backbone-forms as a vendor serving.
         // @see Bones/servers/Route for mirror urls
-        _.bindAll(this, 'exposeClientPlugin', 'exposeClientVendor', 'exposeClientCore', 'loadClientPlugin', 'loadClientPlugins');
         this.exposeClientVendor('backbone-forms/distribution/backbone-forms');
         this.exposeClientCore('../client/utils');
         this.loadClientPlugin(path.join(__dirname, '..'));
+
+        debug('parent: ', parent);
+
         parent.call(this, app);
         this.use(new servers['Boiler'](app));
         this.use(new servers['Jekyll'](app));
@@ -87,13 +100,10 @@ servers.Route.augment({
             this.assets.main,
             this.assets.plugins
         ], { type: '.js' });
-
+        debug('this.assets.core: ', this.assets.core);
         this.get('/assets/bones/main.js', this.assets.main.handler);
         this.get('/assets/bones/plugins.js', this.assets.plugins.handler);
-        debug('parent: ', parent);
         parent.call(this, app);
-
-        console.log('this.assets.all: ', this.assets.all);
     },
 
     exposeClientCore: function(parent, filename) {

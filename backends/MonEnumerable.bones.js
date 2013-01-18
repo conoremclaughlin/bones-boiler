@@ -1,5 +1,6 @@
-var mongoose = require('mongoose');
-var debug = require('debug')('bones-boiler:MonEnumerable');
+var mongoose = require('mongoose')
+  , debug = require('debug')('bones-boiler:MonEnumerable');
+
 backend = backends.Mongoose.extend();
 
 // TODO: Create some form of closure where the name of a collection can be passed. Custom mix-in method?

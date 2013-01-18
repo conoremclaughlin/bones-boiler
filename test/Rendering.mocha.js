@@ -1,11 +1,12 @@
 require('./fixture');
-var bonesTest = require('bones-test');
-var server = bonesTest.server();
-var Bones = require(global.__BonesPath__ || 'bones');
-var should = require('should');
-var debug = require('debug')('bones-boiler:Rendering.mocha');
-var $ = Bones.$;
-var util = require('util');
+
+var Bones = require(global.__BonesPath__ || 'bones')
+  , bonesTest = require('bones-test')
+  , server = bonesTest.server()
+  , should = require('should')
+  , debug = require('debug')('bones-boiler:Rendering.mocha')
+  , $ = Bones.$
+  , util = require('util');
 
 var tests = [
     { _id: 5, name: 'uno' },
@@ -15,17 +16,17 @@ var tests = [
 var testModels = [];
 
 describe('Templating and rendering', function() {
+
     before(function(done) {
         server.start(done);
     });
 
     after(function(done) {
-        server.on('close', done);
-        try { server.close(); }
-        catch (err) { done();  } // server already closed.
+        try { server.close(done); }
+        catch (err) { } // server already closed.
     });
 
-    describe('partial templating', function() {
+    describe('.partial', function() {
         it('should create a placeholder element', function(done) {
             var html = Bones.utils.partial('test');
             html.should.equal('<div data-view="test"></div>');
@@ -71,10 +72,10 @@ describe('Templating and rendering', function() {
         });
     });
 
-    describe('templateSubviews', function() {
-        var html = '';
-        var element;
-        var store;
+    describe('.templateSubviews', function() {
+        var html = ''
+          , element
+          , store;
 
         it('should replace all partial placeholders with rendered html', function(done) {
             store = Bones.utils.makeStore();
@@ -103,7 +104,7 @@ describe('Templating and rendering', function() {
         });
     });
 
-    describe('templateAll', function() {
+    describe('.templateAll', function() {
         var html = '';
 
         it('should recursively template a view and its subviews', function(done) {
@@ -117,14 +118,16 @@ describe('Templating and rendering', function() {
        });
     });
 
-    describe('renderSubviews', function() {
-        var html = '',
-            rendered = '',
-            views = {},
-            renderedElement = {};
+    describe('.renderSubviews', function() {
+        var html = ''
+          , rendered = ''
+          , views = {}
+          , renderedElement = {};
 
-        _.each(tests, function(test) {
-            testModels.push(new server.plugin.models['Lorem'](test));
+        before(function() {
+            _.each(tests, function(test) {
+                testModels.push(new server.plugin.models['Lorem'](test));
+            });
         });
 
         it('should return an object of views it has attached to prerendered placeholders given a jquery element', function(done) {
@@ -194,7 +197,7 @@ describe('Templating and rendering', function() {
         });
     });
 
-    describe('renderAll', function() {
+    describe('#renderAll', function() {
        it('should recursively render the view and its subviews', function(done) {
            var view = new server.plugin.views['Lorems'](new server.plugin.models['Lorems']({ collection: tests }));
            view.renderAll();

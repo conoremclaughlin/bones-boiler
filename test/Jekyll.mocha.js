@@ -1,9 +1,10 @@
 require('./fixture');
-var bonesTest = require('bones-test');
-var server = bonesTest.server();
-var debug = require('debug')('bones-boiler:Jekyll.mocha');
-var request = require('request');
-var should = require('should');
+
+var debug = require('debug')('bones-boiler:Jekyll.mocha')
+  , bonesTest = require('bones-test')
+  , request = require('request')
+  , should = require('should')
+  , server = bonesTest.server()
 
 describe('Jekyll Server', function() {
     before(function(done) {

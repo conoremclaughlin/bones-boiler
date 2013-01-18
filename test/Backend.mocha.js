@@ -1,13 +1,15 @@
+process.env.NODE_ENV = 'test';
+
 require('./fixture');
-var debug = require('debug')('bones-boiler:Backend.mocha');
-var bonesTest = require('bones-test');
-var Bones = require(global.__BonesPath__ || 'bones');
-var Backend = Bones.Backend;
-var server = bonesTest.server();
+
+var debug = require('debug')('bones-boiler:Backend.mocha')
+  , bonesTest = require('bones-test')
+  , Bones = require('bones')
+  , server = bonesTest.server();
 
 describe('Backend', function() {
-    var plugin;
-    var Backend = Bones.Backend;
+    var plugin
+      , Backend = Bones.Backend;
 
     before(function(done) {
         server.start(done);
@@ -15,9 +17,8 @@ describe('Backend', function() {
     });
 
     after(function(done) {
-        server.on('close', done);
-        try { server.close(); }
-        catch (err) { done();  } // server already closed.
+        try { server.close(done); }
+        catch (err) { } // server already closed.
     });
 
     it('should be a class object within Bones', function(done) {
@@ -40,7 +41,7 @@ describe('Backend', function() {
         done();
     });
 
-    describe('extendWithPre', function() {
+    describe('.extendWithPre', function() {
         var test = [1, 2];
         var pre = function(parent) {
             return parent.call(this, test);

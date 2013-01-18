@@ -1,6 +1,8 @@
-var path = require('path');
-var bonesPath = global.__BonesPath__ || 'bones';
-var Bones = require(bonesPath);
+#!/usr/bin/env node
+
+var path = require('path')
+  , bonesPath = global.__BonesPath__ || 'bones'
+  , Bones = require(bonesPath);
 
 Bones.Backbone.setDomLibrary(Bones.$);
 
@@ -33,3 +35,8 @@ Bones.plugin.load = _.wrap(Bones.plugin.load, function(parent, dir) {
 require('./backends/Mongoose');
 
 Bones.load(__dirname);
+
+if (!module.parent) {
+    // TODO: would a pre-flight here be useful? Before initialization?
+    Bones.start();
+}

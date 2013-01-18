@@ -1,20 +1,36 @@
 process.env.NODE_ENV = 'test';
 require('./fixture');
-var debug = require('debug')('bones-boiler:Models.mocha');
-var bonesTest = require('bones-test');
 
-// TODO: change how to require server.
-var server = bonesTest.server();
-server.plugin.config.mongoName += '-test';
+var debug = require('debug')('bones-boiler:Models.mocha')
+  , bonesTest = require('bones-test')
+  , server = bonesTest.server()
 
 // Test data.
 var data = {
     name: 'First'
 };
 
+before(function(done) {
+    server.plugin.config.mongoHost = 'localhost';
+    server.plugin.config.mongoName = 'bb-test';
+    done();
+});
+
+after(function(done) {
+    var plugin = server.plugin;
+    plugin.backends.Mongoose.dropDatabase(plugin.config.mongoHost + '/' + plugin.config.mongoName, function(err) {
+        done(err);
+    });
+});
+
 describe('Models', function() {
-    describe('base models', function() {
+
+    describe('Base', function() {
+        var model;
+
         before(function(done) {
+
+            model = new server.plugin.models.Base();
             server.start(done);
         });
 
@@ -22,8 +38,6 @@ describe('Models', function() {
             try { server.close(done); }
             catch (err) { } // server already closed.
         });
-
-        var model = new server.plugin.models.Base();
 
         it('should have a url /api/<title> with no id', function(done) {
             model.url().should.be.equal('/api/base');
@@ -39,8 +53,7 @@ describe('Models', function() {
         bonesTest.testModel(server, 'Lorem');
     });
 
-    describe('base collections', function() {
-
+    describe('BaseCollection', function() {
         it('should have db as a property', function(done) {
             var collection = new server.plugin.models.BaseCollection();
             collection.should.have.property('db').and.be.a('function');
@@ -50,7 +63,7 @@ describe('Models', function() {
 
 });
 
-describe('Models HTTP', function() {
+describe('Models', function() {
     bonesTest.testModelCRUDHTTP(server, 'Lorem', data, {
         name: 'another name'
     });

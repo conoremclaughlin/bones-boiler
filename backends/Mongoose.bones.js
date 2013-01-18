@@ -1,5 +1,6 @@
-var mongoose = require('mongoose');
-var debug = require('debug')('bones-boiler:mongoose');
+var mongoose = require('mongoose')
+  , debug = require('debug')('bones-boiler:mongoose');
+
 backend = Bones.Backend.extend();
 
 backend.sync = function(req, res, next) {
@@ -49,6 +50,17 @@ backend.sync = function(req, res, next) {
     default:
         return res.send(new Error.HTTP('Unknown request method: ' + req.method, 500));
     }
+};
+
+/**
+ * .
+ */
+backend.dropDatabase = function(url, callback) {
+    var mongoose = require('mongoose');
+    mongoose.connect(url, function(err) {
+        mongoose.connection.db.dropDatabase();
+        callback && callback(err);
+    });
 };
 
 /**

@@ -60,7 +60,7 @@ utils.registerWrapperForFile = function(filename, wrapper) {
 utils.compileWrapper = function(module, filename) {
     var wrapper = utils.wrappersServer[filename];
     var content = fs.readFileSync(filename, 'utf8');
-    if (!content) throw new Error('unable to read file: ', filename);
+    if (!content) console.error('unable to read file: ', filename);
 
     if (wrapper) {
         if (wrapper.prefix) content = wrapper.prefix + ';' + content;
@@ -121,4 +121,23 @@ utils.requireWithWrap = function(module, filename, kind) {
     module._compile(content, filename);
     return module.require(filename);
 };
+
+// TODO: move to separate debug lib to make things easier.
+Object.defineProperty(global, '__stack', {
+    get: function(){
+        var orig = Error.prepareStackTrace;
+        Error.prepareStackTrace = function(_, stack){ return stack; };
+        var err = new Error;
+        Error.captureStackTrace(err, arguments.callee);
+        var stack = err.stack;
+        Error.prepareStackTrace = orig;
+        return stack;
+    }
+});
+
+Object.defineProperty(global, '__line', {
+    get: function(){
+        return __stack[1].getLineNumber();
+    }
+});
 

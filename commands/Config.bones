@@ -24,6 +24,6 @@ Bones.Command.options['mongoName'] = {
     'default': 'bb'
 };
 
-Bones.Command.prototype.installMongo = function(plugin, step) {
+Bones.Command.prototype.initializeMongoDB = function(plugin, step) {
     // TODO: implement.
 };

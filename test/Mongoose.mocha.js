@@ -1,9 +1,10 @@
 process.env.NODE_ENV = 'test';
 require('./fixture');
-var _ = require('underscore'),
-    bonesTest = require('bones-test'),
-    server = bonesTest.server(),
-    Bones = require(global.__BonesPath__ || 'bones');
+
+var Bones = require(global.__BonesPath__ || 'bones')
+  , _ = Bones._
+  , bonesTest = require('bones-test')
+  , server = bonesTest.server()
 
 // Write to a test database.
 // TODO: write an uninstall method for the test database.
@@ -52,16 +53,12 @@ describe('Mongoose', function() {
         wrapped('hello');
     });
 
-    it('should mixin queries with the getConnection plugin', function(done) {
-        var model = server.plugin.models.Lorems;
-        Bones.plugin.backends.MonEnumerable.mixinQueries(model);
-        model.should.have.property('getLatest').and.be.a('function');
-        done();
-    });
-
-    describe('deleteMongoDB command', function() {
-        it('should delete a Mongo database given a a db name', function(done) {
-            done('implement');
+    describe('.mixinQueries', function() {
+        it('should mixin queries with the getConnection plugin', function(done) {
+            var model = server.plugin.models.Lorems;
+            server.plugin.backends.MonEnumerable.mixinQueries(model);
+            model.should.have.property('getLatest').and.be.a('function');
+            done();
         });
     });
 });
