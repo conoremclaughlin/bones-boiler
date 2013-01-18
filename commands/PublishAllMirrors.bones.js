@@ -20,7 +20,9 @@ command.options['minify'] = {
 };
 
 /**
- * Great for creating static templates like forms from model schemas.
+ * PublishAllMirrors to a directory (minified or not) found in Route.assets.
+ *
+ * @see above for prototype.
  */
 command.prototype.initialize = function(plugin, callback) {
     var funcs = [];

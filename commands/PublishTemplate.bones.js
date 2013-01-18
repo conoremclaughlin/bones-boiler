@@ -26,11 +26,11 @@ command.options['directory'] = {
  * Great for creating static templates like forms from model schemas.
  */
 command.prototype.initialize = function(plugin, callback) {
-    var err = {};
-    var html = '';
-    var options = command.extractOptions(command, plugin);
-    var model = new plugin.models[options.model]();
-    var view = new plugin.views[options.view]({ model: model });
+    var err = {}
+      , html = ''
+      , options = command.extractOptions(command, plugin)
+      , model = new plugin.models[options.model]()
+      , view = new plugin.views[options.view]({ model: model });
 
     view.renderAll ? view.renderAll() : view.render();
     html = view.outerHtml ? view.outerHTML() : view.html();

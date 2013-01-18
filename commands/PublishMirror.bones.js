@@ -23,15 +23,15 @@ command.options['minify'] = {
 };
 
 /**
- * Great for creating static templates like forms from model schemas.
+ * PublishMirror from Route.assets to a directory (minified or not).
+ *
+ * @see above for prototype.
  */
 command.prototype.initialize = function(plugin, callback) {
     var originalMinify;
     var options = command.extractOptions(command, plugin);
     var route = new plugin.servers['Route'](plugin);
     var mirror = route.assets[options.mirror];
-    debug('plugin: ', plugin);
-    debug('mirror: ', mirror);
 
     if (options.minify) {
         originalMinify = mirror.options.minify;

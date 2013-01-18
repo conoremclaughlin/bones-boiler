@@ -3,18 +3,14 @@ var mongoose = require('mongoose')
 
 backend = backends.Mongoose.extend();
 
-// TODO: Create some form of closure where the name of a collection can be passed. Custom mix-in method?
-// TODO: Take a look at the plugin architecture of Mongoose and make use of it (adding support for created as a property,
-// for example.
-// Looking for a way to define static methods I guess.  Statics object like in Mongoose Collections?
-// Options:
-// 1. write a mixin method that takes a
 /**
- * Requires a db connection to access mongooseModels.
- * @param lt - must be less than
- * @param gt -
- * @param callback - what next?
- * @api public
+ * Gets the latest of a mongodb collection based on the field 'created.'
+ *
+ * @param {Object} collection connection to execute the query on.
+ * @param {number} skip number of documents in sorted order.
+ * @param {number} limit number of documents to return.
+ * @param {Function} callback to execute upon completion of the query.
+ * @returns {boolean} query executed?
  */
 backend.prototype.getLatest = function(connection, skip, limit, callback) {
     callback = callback || _.last(arguments);
@@ -29,6 +25,3 @@ backend.prototype.getLatest = function(connection, skip, limit, callback) {
         .exec(callback);
     return true;
 };
-
-
-

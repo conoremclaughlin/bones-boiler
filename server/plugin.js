@@ -1,15 +1,17 @@
-var Bones   = require(global.__BonesPath__ || 'bones');
-var fs      = require('fs');
-var path    = require('path');
-var utils   = Bones.utils;
+var bonesPath = require.resolve(global.__BonesPath__ || 'bones')
+  , Bones = require(bonesPath)
+  , fs = require('fs')
+  , path = require('path')
+  , utils = Bones.utils
+  , plugin = Bones.plugin;
 
 /***************** BEGIN BONES **********************/
 
-// added until pull request fulfills more flexible structure for plugins
+// added until makara's pull request fulfills more flexible structure for plugins
 
 require.extensions['.bones.js'] = function(module, filename) {
     var content = fs.readFileSync(filename, 'utf8');
-    var wrappers = wrappers || utils.wrappersServer; // changed from original
+    var wrappers = wrappers || utils.wrappersServer; // CHANGED FROM ORIGINAL
     var kind = utils.singularize(path.basename(path.dirname(filename)));
 
     wrappers[kind] = wrappers[kind] || {};
@@ -28,24 +30,17 @@ require.extensions['.bones'] = require.extensions['.bones.js'];
 
 /***************** END BONES **********************/
 
-Bones.plugin.pages = {};
-Bones.plugin.backends = {};
-
-/**
- * Extend will overwrite only when plugin.js is loaded outside a specific function scope. Hard-coding path from this index.js file for now
- */
+// load bones and bones-boiler wrappers into utils
+utils.loadAllWrappers(path.join(require.resolve(bonesPath), '..'));
 utils.loadAllWrappers(__dirname + '/..');
 
+// wrap the .js file and compile it if a wrapper has been registered for it
 require.extensions['.js'] = _.wrap(require.extensions['.js'], function(parent, module, filename) {
     utils.compileWrapper(module, filename);
     return parent.call(this, module, filename);
 });
 
-/**
- * Exposes html pages to Bones so they can be rendered with
- * a wrapping dynamic view for things like logged-in users (App._ for example)
- * TODO: this can be done more elegantly now that I know Bones better.
- */
+// expose and register jekyll pages in bones.plugin
 require.extensions['.html'] = function(module, filename) {
     var content = fs.readFileSync(filename, 'utf8');
 
@@ -71,19 +66,28 @@ require.extensions['.html'] = function(module, filename) {
     };
 };
 
-/**
- * OVERRIDE this to load and use your own statically compiled directory structure.
- * Note: Bones.plugin.add uses the parent directory of the file to describe its 'kind'
- * for storage in the Plugin, hence templates/compiled/templates.
- * TODO: May create new addTemplate to allow more flexible directories.....
- */
-Bones.plugin.loadCompiled = function(dir) {
+// 0.9.2 compatibility
+Bones.Backbone.setDomLibrary(Bones.$);
+
+// load server-side libraries.
+plugin.pages = {};
+plugin.backends = {};
+Bones.Backend = require('./backend');
+Bones.Backbone.Form = require('backbone-forms/distribution/backbone-forms');
+Bones.utils.aliasWrapperForFile('backbone.marionette/lib/backbone.marionette.js', 'backbone-marionette');
+Bones.Backbone.Marionette = require('backbone.marionette/lib/backbone.marionette.js');
+
+// wrap to load your own compiled directory structure
+// note: bones.plugin.add uses the parent directory of
+// the required file to register the file's 'kind,' templates in this case
+plugin.loadCompiled = function(dir) {
     this.require(dir, 'templates/compiled/templates');  // Load statically-compiled templates that will still be dynamic.
     this.require(dir, 'templates/compiled/pages');      // Load static pages for wrapper rendering.
 };
 
-Bones.plugin.load = _.wrap(Bones.plugin.load, function(parent, dir) {
-    parent.call(this, dir);
+plugin.load = _.wrap(plugin.load, function(parent, dir) {
+    this.require(dir, 'backends');
     this.loadCompiled(dir);
+    parent.call(this, dir);
     return this;
 });

@@ -1,6 +1,14 @@
-var Bones = require(global.__BonesPath__ || 'bones');
-var Backbone = Bones.Backbone;
+var Bones = require(global.__BonesPath__ || 'bones')
+  , Backbone = Bones.Backbone;
 
+/**
+ * Allows use of Backbone.sync on the server by wrapping
+ * and formatting arguments for Bones.
+ *
+ * TODO: finish implementation and write tests.
+ *
+ * @see backbone for prototype documentation.
+ */
 Backbone.sync = function(method, model, options) {
     options || (options = {});
 
@@ -12,7 +20,6 @@ Backbone.sync = function(method, model, options) {
 
     // Create a route handler wrapper to call success or error.
     var next = function(req, res) {
-        // TODO: finish implementation after Bones.sync succeeds.
         if (res.locals.success) {
             options.success(model, response);
         } else {
@@ -29,8 +36,11 @@ Backbone.sync = function(method, model, options) {
 };
 
 /**
- * Override Bones.sync or model.sync with a backend solution
- * otherwise default throws an error.
+ * Override Bones.sync or model.sync with a backend solution.
+ * No implementation throws an error.
+ *
+ * @param
+ * @returns
  */
 Bones.sync = Bones.sync || function(req, res, next) {
    /*

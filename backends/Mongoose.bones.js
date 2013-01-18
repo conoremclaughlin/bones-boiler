@@ -67,11 +67,11 @@ backend.dropDatabase = function(url, callback) {
  * .
  */
 backend.makeGetConnection = function(collection) {
-    var getConnection = '',
-        queries = {};
+    var getConnection = ''
+       , queries = {};
+
     if (_.isString(collection)) {
         getConnection = function() {
-            debug('collection title: ', collection);
             return Bones.plugin.mongooseModels[collection];
         };
     } else if (_.isObject(collection)) {
@@ -82,23 +82,15 @@ backend.makeGetConnection = function(collection) {
         return false;
     }
 
-    debug('getConnection: ', getConnection);
     return function(parent) {
-        debug('arguments: ', arguments);
-        debug('arguments: ', arguments[0]);
-        debug('arguments: ', arguments[1]);
         var args = Array.prototype.slice.call(arguments, 1);
-        debug('args: ', args);
-        debug('Bones.plugin.mongooseModels: ', Bones.plugin.mongooseModels);
         args = [ getConnection() ].concat(args);
-        debug('args after concatenation: ', args);
         parent.apply(this, args);
     };
 };
 
 /**
- *
- *
+ * .
  */
 backend.mixinQueries = function(collection) {
     var title = collection.title || collection.constructor.title;
@@ -108,9 +100,11 @@ backend.mixinQueries = function(collection) {
 };
 
 /**
- * Pass this.
+ * Mixs in a backend object's queries into a collection's prototype
+ * with a pre function to fetch a connection.
  *
- * XXX: this doesn't work.  I need to pass the this pointer, but if someone was using this, couldn't they just?
+ * TODO: No tests yet, waiting to complete when decided on more
+ * concrete collection/query structure.
  */
 backend.mixinPrototypeQueries = function(collection, pre) {
     pre = pre ? pre : function() {
@@ -121,6 +115,6 @@ backend.mixinPrototypeQueries = function(collection, pre) {
         }
     };
     collection.prototype.getConnection = pre;
-    Bones.Backend.extendWithPre(collection.prototype, this, pre);
+    Bones.Backend.extendWithPre(collection.prototype, this.collection, pre);
 };
 

@@ -1,5 +1,5 @@
-var Bones = require(global.__BonesPath__ || 'bones');
-var _ = Bones._;
+var Bones = require(global.__BonesPath__ || 'bones')
+  , _ = Bones._;
 
 Bones.Command.extractOptions = function(command, plugin) {
     var options = {};

@@ -1,6 +1,6 @@
-var Bones = require(global.__BonesPath__ || 'bones');
-var _ = Bones._;
-var async = require('async');
+var Bones = require(global.__BonesPath__ || 'bones')
+  , _ = Bones._
+  , async = require('async');
 
 
 Bones.Server.augment({
