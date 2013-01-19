@@ -92,7 +92,6 @@ server.prototype.initializeModelsAndCollections = function(plugin) {
  *
  * @param {Object} backboneModel class definition.
  * @param {Object} [options] for defining custom api handlers.
- * @returns
  */
 server.prototype.initializeBackboneApi = function(backboneModel, options) {
     options = options || {};
@@ -103,7 +102,7 @@ server.prototype.initializeBackboneApi = function(backboneModel, options) {
       , build       = (model.build || this.makeBuildHandler(backboneModel))
       , validate    = this.makeValidateHandler(model)
       , sanetize    = (model.sanetize || this.sanetize)
-      , sync        = (model.sync || Bones.sync)
+      , sync        = (model.serverSync || Bones.sync)
       , parse       = this.makeParseHandler(model)
       , send        = (model.send || this.sendJson);
 
