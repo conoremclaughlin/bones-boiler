@@ -1,6 +1,6 @@
 {
   "name": "bones-boiler",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Test playground bones features and setups!",
   "main": "index.js",
   "scripts": {
