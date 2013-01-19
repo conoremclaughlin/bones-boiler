@@ -1,16 +1,23 @@
-var mongoose = require('mongoose');
-var debug = require('debug')('bones-boiler:mongoose');
+var mongoose = require('mongoose')
+  , debug = require('debug')('bones-boiler:mongoose');
+
 backend = Bones.Backend.extend();
 
+/**
+ * Express handler that pulls a Backbone model from req.model and
+ * uses its mongoose collection connection (this.db) to perform a CRUD
+ * for the given XMLHTTPRequest method.
+ *
+ * @param {Object} req.model to CRUD.
+ * @returns {Object} res.locals.model record returned.
+ */
 backend.sync = function(req, res, next) {
     if (!req.model) return next(new Error.HTTP('Error occured. No model to sync. Please try again later.', 500));
 
-    // TODO: populate model and switch from req.body to req.model.toJSON()
     switch(req.method) {
     case 'get':
     case 'GET':
         req.model.db.findById(req.model.id, function(err, document) {
-            //debug('get err, document:', err, document);
             if (err) return next(new Error.HTTP(err, 500));
             if (!document) return next(new Error.HTTP(err, 404));
             res.locals.model = document.toObject();
@@ -20,12 +27,12 @@ backend.sync = function(req, res, next) {
     case 'post':
     case 'POST':
         // I'd rather use db.create to be consistent
-        // but it initializes a document model anyway.
+        // but it initializes a document anyway.
         var document = new req.model.db(req.body);
         document.save(function(err, document) {
             if (err) return next(new Error.HTTP(err, 500));
             res.locals.model = document.toObject();
-            return next();// saved!
+            return next(); // saved!
         });
 
         break;
@@ -33,9 +40,7 @@ backend.sync = function(req, res, next) {
     case 'PUT':
         // XXX: Bug in mongoose so findByIdAndUpdate
         // fails at this time if document is not initialized.
-        // TODO: Check again when we can bump versions.
-
-        // Cannot update the _id field for a mongo document.
+        // TODO: Check again when we bump versions.
         if (req.body._id) delete req.body._id;
         req.model.db.update({ _id: req.model.id }, req.body, function(err, document) {
             if (err) return next(new Error.HTTP(err, 500));
@@ -54,3 +59,79 @@ backend.sync = function(req, res, next) {
         return res.send(new Error.HTTP('Unknown request method: ' + req.method, 500));
     }
 };
+
+/**
+ * Drop a database like its hot for a given url.
+ *
+ * @param url of target database.
+ * @param callback after connect and drop.
+ */
+backend.dropDatabase = function(url, callback) {
+    var mongoose = require('mongoose');
+    mongoose.connect(url, function(err) {
+        mongoose.connection.db.dropDatabase();
+        callback && callback(err);
+    });
+};
+
+/**
+ * Make a function to fetch a connection and unshift the connection
+ * as the first argument to an argument function.
+ *
+ * @param {Mixed} collection string name or collection connection.
+ * @returns {Function} getConnection
+ */
+backend.makeGetConnection = function(collection) {
+    var getConnection = ''
+       , queries = {};
+
+    if (_.isString(collection)) {
+        getConnection = function() {
+            return Bones.plugin.mongooseModels[collection];
+        };
+    } else if (_.isObject(collection)) {
+        getConnection = function() {
+            return collection;
+        };
+    } else {
+        return false;
+    }
+
+    return function(parent) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        args = [ getConnection() ].concat(args);
+        parent.apply(this, args);
+    };
+};
+
+/**
+ * Mixs a backend object's functions into a collection's static methods.
+ *
+ * @param {Object} collection Backbone class definition.
+ */
+backend.mixinQueries = function(collection) {
+    var title = collection.title || collection.constructor.title;
+    if (!title) return false;
+    title = Bones.utils.singularize(title);
+    Bones.Backend.extendWithPre(collection, this.prototype, backend.makeGetConnection(title));
+};
+
+/**
+ * Mixs in a backend object's functions into a collection's prototype
+ * with a pre function to fetch a connection.
+ *
+ * TODO: No tests yet, waiting to complete when decided on more
+ * concrete collection/query structure.
+ */
+backend.mixinPrototypeQueries = function(collection, pre) {
+    pre = pre ? pre : function() {
+        if (this.db) {
+            return this.db;
+        } else {
+            return false;
+        }
+    };
+    collection.prototype.getConnection = pre;
+    Bones.Backend.extendWithPre(collection.prototype, this.collection, pre);
+};
+

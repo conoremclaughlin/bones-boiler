@@ -1,13 +1,24 @@
-var debug = require('debug')('bones-boiler:boiler');
+var env = process.env.NODE_ENV
+  , mongoose = require('mongoose')
+  , debug = require('debug')('bones-boiler:boiler');
 
 /**
- * A boilerplate server you can either use or rip apart
- * ruthlessly copying-and-pasting how you will.
+ * A boilerplate server you can either use or rip apart ruthlessly.
+ * Initializes mongoose connections, models, and sets up default
+ * build, validate, sanetize, sync, parse, and send structure for
+ * all Backbone models that have a defined url function.
  */
+
 server = servers.Base.extend({});
 
-server.prototype.initialize = function(app) {
-    _.bindAll(this, 'initializeBackboneApi');
+server.prototype.initialize = function(plugin) {
+    _.bindAll(this, 'initializeBackends', 'initializeBackboneApi');
+
+    Bones.sync = plugin.backends.Mongoose.sync;
+
+    // cheap workaround for unit testing and single instances of Bones. it annoys me, too.
+    if (env === 'test' || env === 'TEST') plugin.bootstrapList = [];
+    plugin.bootstrapList.push(this.initializeBackends);
 
     // parse and update the static method permissions for each model definition.
     _.each(models, function(model) {
@@ -17,41 +28,88 @@ server.prototype.initialize = function(app) {
     });
 
     // initialize model and collection api points.
-    this.initializeModelsAndCollections(app);
+    this.initializeModelsAndCollections(plugin);
 
     return this;
 };
 
-server.prototype.initializeModelsAndCollections = function(app) {
-    if (app.config['disableDefaultApi']) return false;
-    this.models = app.models;
+/**
+ * Initializes mongoose connection and creates mongoose models
+ * for each Backbone model in Bones.plugin.mongooseModels.
+ * Executes callback upon error or successful connection, recommended
+ * use with the bootstrapList.
+ *
+ * @param next callback to execute.
+ */
+server.prototype.initializeBackends = function(next) {
+    var config = Bones.plugin.config;
+    var db;
+
+    db = mongoose.createConnection(config.mongoHost, config.mongoName, config.mongoPort);
+    db.on('error', next);
+    db.once('open', function() {
+        // yay! register mongoose models for semi-mixins with server-side backbone models.
+        try {
+            Bones.plugin.mongooseModels = {};
+            _.each(models, function(model) {
+                if (model && model.prototype.dbSchema) {
+                    Bones.plugin.mongooseModels[model.title] = db.model(model.title, new mongoose.Schema(model.prototype.dbSchema));
+                }
+            });
+
+            return next();
+        } catch(err) {
+            return next(new Error('warning - unable to create db.model: ' + err));
+        }
+    });
+    Bones.plugin.db = db;
+};
+
+/**
+ * Creates a default API point for all models with urls.
+ *
+ * @param plugin of bones with model definitions.
+ */
+server.prototype.initializeModelsAndCollections = function(plugin) {
+    if (plugin.config['disableDefaultApi']) return false;
+    this.models = plugin.models;
     _.each(this.models, function(model) {
         this.initializeBackboneApi(model);
     }.bind(this));
-
-    // fresh collection function map for readability.
-    _.each(app.collections, function(collection) {
-        this.initializeBackboneApi(collection);
-    }.bind(this));
 };
 
+/**
+ * Creates an API point for the argument Backbone model
+ * with either a custom set of handlers or a default set of:
+ *  build - instantiate the model
+ *  validate - reject the request if anything observable malformed
+ *  sanetize - sanetize and whitelist values cannot immediately confirm (command injection, for example)
+ *  sync - CRUD operation of the data store
+ *  parse - parse and format response from CRUD operation (remove passwords from records, etc.)
+ *  send - deliver response using whatever method (JSON, return, etc.)
+ *
+ * Note: delete uses [build, validate, sync, send]
+ *
+ * @param {Object} backboneModel class definition.
+ * @param {Object} [options] for defining custom api handlers.
+ */
 server.prototype.initializeBackboneApi = function(backboneModel, options) {
     options = options || {};
 
-    var url         = '';
-    var apiHandlers = {};
-    var model       = new backboneModel();
-    var build       = (model.build || this.makeBuildHandler(backboneModel));
-    var validate    = this.makeValidateHandler(model);
-    var sanetize    = (model.sanetize || this.sanetize);
-    var sync        = (model.sync || Bones.sync);
-    var parse       = this.makeParseHandler(model);
-    var send        = (model.send || this.sendJson);
+    var url         = ''
+      , apiHandlers = {}
+      , model       = new backboneModel()
+      , build       = (model.build || this.makeBuildHandler(backboneModel))
+      , validate    = this.makeValidateHandler(model)
+      , sanetize    = (model.sanetize || this.sanetize)
+      , sync        = (model.serverSync || Bones.sync)
+      , parse       = this.makeParseHandler(model)
+      , send        = (model.send || this.sendJson);
 
     try {
         url = Bones.utils.getUrl(model);
     } catch(error) {
-        return debug('initializeBackboneApi - cannot create API point for: ', backboneModel);
+        return debug('initializeBackboneApi - no url - cannot create API point for: ', backboneModel);
     };
     apiHandlers = {
         get:    [build, validate, sanetize, sync, parse, send],
@@ -74,7 +132,26 @@ server.prototype.initializeBackboneApi = function(backboneModel, options) {
 };
 
 /**
- * Generate validate route handler.
+ * Make an express handler to build a model from the request.
+ * Allows custom model urls, because the intended model
+ * does not have to derived as a param from the url.
+ *
+ * @param {Object} model Backbone definition to instantiate with.
+ * @returns {Function} validate handler.
+ */
+server.prototype.makeBuildHandler = function(model) {
+    return function build(req, res, next) {
+        req.model = new model({ _id: req.params.id }, req.query);
+        return next();
+    }.bind(this);
+};
+
+/**
+ * Make an express handler that makes use of any defined validates for a model,
+ * whether client-side, server-side, or both.
+ *
+ * @param {Object} model instance to use for validation of request.
+ * @returns {Function} validate handler.
  */
 server.prototype.makeValidateHandler = function(model) {
 
@@ -94,19 +171,12 @@ server.prototype.makeValidateHandler = function(model) {
 };
 
 /**
- * Generate build route handler.
- * Pass any querystring parameters to the model.
- */
-server.prototype.makeBuildHandler = function(model) {
-    return function build(req, res, next) {
-        req.model = new model({ _id: req.params.id }, req.query);
-        return next();
-    }.bind(this);
-};
-
-/**
  * Clean up the client-sent data (XSS, command injection, etc.)
- * TODO: Push into validate?  If looks bad, don't take anything at all?
+ * difficult to reject outright. Default just white-lists data based on
+ * schema.
+ *
+ * @param {Object} req.body containing
+ * @returns {Function} validate handler.
  */
 server.prototype.sanetize = function(req, res, next) {
     if (req.method === 'POST' || req.method === 'PUT') {
@@ -116,17 +186,24 @@ server.prototype.sanetize = function(req, res, next) {
 };
 
 /**
- * Filter out passwords, etc. from model returned.
- * TODO: Change so filters for all.  POST can get in, but not out in the returned model.  Need to figure out boolean rules for that.
+ * Make an express handler that makes use of any defined parses
+ * for a model - whether client-side, server-side, or both. Can be used
+ * for filtering passwords, adding response timestamps, etc. Default
+ * deletes the version hash of a mongo record.
+ *
+ * @param {Object} model instance to use for parsing of request.
+ * @returns {Function} parse handler.
  */
 server.prototype.makeParseHandler = function(model) {
     var parse = (model.parse && model.parse.length === 3) ? model.parse : function parse(req, res, next) {
 
-        // Quick fix to remove the version number.
-        delete res.locals.model.__v;
+        if (model.parse) {
+            var response = res.locals.model.toJSON ? res.locals.model.toJSON() : res.locals.model;
+            res.locals.model = model.parse(response);
+        }
 
-        // TODO: Filter response to only keys allowed for GET.
-        // req.locals.model = models.Permissions.filter(res.locals.model, model.dbSchema, req.method);
+        // Quick fix to remove the version number from Mongo records
+        delete res.locals.model.__v;
         return next();
     };
 
