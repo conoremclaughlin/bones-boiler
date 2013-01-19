@@ -1,6 +1,8 @@
-var Bones = require(global.__BonesPath__ || 'bones');
-var Backbone = Bones.Backbone;
-var _ = require('underscore');
+var Bones = require(global.__BonesPath__ || 'bones')
+  , Backbone = Bones.Backbone
+  , _ = Bones._
+  , debug = require('debug')('bones-boiler:backend')
+  , util = require('util');
 
 module.exports = Backend;
 
@@ -23,30 +25,25 @@ Backend.prototype.bootstrap = function(plugin, callback) {
 
 Backend.prototype.initialize = function(plugin, callback) {};
 
-Backend.prototype.toString = function() {
-    return '[Backend ' + this.constructor.title + ']';
-};
 /**
- * What else does a backend commonly need? A method to create a query (whitelisting, blacklisting, JSON parsing?, defaults)
- * TODO: Change the naming, but keeping it for now for legacy reasons.
+ * Wraps all functions in a source object with a 'pre' function
+ * and extends the destination object with the wrapped source.
+ * Combination of Backbone and mongoose's plugin functionality.
+ *
+ * @param {Object} destination to extend with wrapped object.
+ * @param {Object} source and its functions to wrap.
+ * @param {Function} pre function to wrap all functions with.
+ * @returns {Object} destionation with freshly wrapped functions.
  */
-Backend.prototype.query = function(query) {
+Backend.extendWithPre = function(destination, source, pre) {
+    var wrapped = {};
 
+    // wrap only functions
+    _.each(source, function(property, key) {
+        if (_.isFunction(property)) {
+            wrapped[key] = _.wrap(property, pre);
+        }
+    });
+    destination = _.extend(destination, source, wrapped);
+    return destination;
 };
-
-/**
- * A method to execute a query and call the backend driver.
- * TODO: Throw error or something if not implemented, keeping as mixin for legacy reasons.
- */
-Backend.prototype.sync = function(req, res, next) {
-
-};
-
-/**
- * A method to parse and render the results for returning to the server and/or client (items, _.pick, timestamp, etc.).
- * TODO: Same.  Keeping for legacy reasons until a better solution can be found.
- */
-Backend.prototype.parse = function(result) {
-
-};
-
