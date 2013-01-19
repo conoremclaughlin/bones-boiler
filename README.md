@@ -86,7 +86,11 @@ Getting Started
 4. Modify or override options in `commands/Config.bones.js` with your specific MongoDB instance information
   * Default `localhost:27017/bb`
 5. Run `npm install`
-6. Delete `node_modules/bones/node_modules/...` backbone, jquery, and underscore folders so bones-boiler can use later versions.
+6. From the `bones-boiler` directory, run:
+```
+rm -rf node_modules/bones/node_modules/backbone node_modules/bones/node_modules/jquery node_modules/bones/node_modules/mirror
+```
+to delete bones' backbone, jquery, and mirror dependency folders so bones-boiler can use its own versions.
 7. Run `node ./index.js`
 
 Testing
