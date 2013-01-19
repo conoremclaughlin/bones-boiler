@@ -118,9 +118,12 @@ describe('Publish', function() {
                 fs.readdir(options.directory, function(err, list) {
                     // all, plugin, main, vendor, core, models, templates, views, routers... anything else?
                     var error;
-                    list.length.should.equal(9);
+                    debug('list: ', list);
                     if (err) return done(err);
+                    list.length.should.equal(10);
                     list.forEach(function(fileName) {
+                        // preserve .css file for checking in assets folder.
+                        if (path.extname(fileName) !== '.js') return;
                         try {
                             fs.unlinkSync(path.join(options.directory, fileName));
                         } catch(err) {
