@@ -28,10 +28,10 @@ command.options['minify'] = {
  * @see above for prototype.
  */
 command.prototype.initialize = function(plugin, callback) {
-    var originalMinify;
-    var options = command.extractOptions(command, plugin);
-    var route = new plugin.servers['Route'](plugin);
-    var mirror = route.assets[options.mirror];
+    var originalMinify
+      , options = command.extractOptions(command, plugin)
+      , route = new plugin.servers['Route'](plugin)
+      , mirror = route.assets[options.mirror];
 
     if (options.minify) {
         originalMinify = mirror.options.minify;

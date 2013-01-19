@@ -37,6 +37,7 @@ utils.loadAllWrappers = function(pluginDir) {
     utils.wrappersServer = _.extend(utils.wrappersServer, utils.loadWrappers(path.join(pluginDir, 'server')));
     utils.wrappersServer = _.extend(utils.wrappersServer, utils.loadWrappers(path.join(pluginDir, 'server/wrappers')));
     utils.wrappersClient = _.extend(utils.wrappersClient, utils.loadWrappers(path.join(pluginDir, 'client')));
+    utils.wrappersClient = _.extend(utils.wrappersClient, utils.loadWrappers(path.join(pluginDir, 'client/wrappers')));
 };
 
 /**
